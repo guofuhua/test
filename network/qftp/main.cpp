@@ -41,34 +41,17 @@
 #include <QApplication>
 #include "ftpwindow.h"
 #include <QTextCodec>
-
-#ifdef Q_OS_SYMBIAN
-#include <QDir>
-#include <QDesktopWidget>
-#endif
+#include <QIcon>
 
 int main(int argc, char *argv[])
 {
     Q_INIT_RESOURCE(ftp);
-#ifdef Q_OS_SYMBIAN
-    // Change current directory from default private to c:\data
-    // in order that user can access the downloaded content
-    QDir::setCurrent( "c:\\data" );
-#endif
+
     QApplication app(argc, argv);
-//    QTextCodec::setCodecForCStrings(QTextCodec::codecForName("utf8"));
-//#ifdef Q_OS_WIN
-//    QTextCodec::setCodecForLocale(QTextCodec::codecForName("gbk"));
-//#else
-//    QTextCodec::setCodecForLocale(QTextCodec::codecForName("utf8"));
-//#endif
-//    QTextCodec::setCodecForTr(QTextCodec::codecForName("utf8"));
+    QString strPath = QApplication::applicationDirPath();
+    strPath += "/img/icon.png";
+    app.setWindowIcon(QIcon(strPath));
     FtpWindow ftpWin;
-#ifdef Q_OS_SYMBIAN
-    // Make application better looking and more usable on small screen
-    ftpWin.showMaximized();
-#else
     ftpWin.show();
-#endif
     return ftpWin.exec();
 }

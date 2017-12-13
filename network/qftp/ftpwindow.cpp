@@ -186,18 +186,14 @@ void FtpWindow::connectOrDisconnect()
 //![2]
     QUrl url(ftpServerLineEdit->text());
     if (!url.isValid() || url.scheme().toLower() != QLatin1String("ftp")) {
-        qDebug() << "not";
         ftp->connectToHost(ftpServerLineEdit->text(), 21);
         ftp->login();
     } else {
-        qDebug() << "true";
         ftp->connectToHost(url.host(), url.port(21));
 
         if (!url.userName().isEmpty()) {
-            qDebug() << "tr11ue";
             ftp->login(QUrl::fromPercentEncoding(url.userName().toLatin1()), url.password());
         } else {
-            qDebug() << "tr12ue";
             ftp->login();
         }
         if (!url.path().isEmpty())
@@ -257,7 +253,7 @@ void FtpWindow::ftpCommandFinished(int commandId, bool error)
 #ifndef QT_NO_CURSOR
     setCursor(Qt::ArrowCursor);
 #endif
-    qDebug() << "ftpCommandFinished" << commandId << error;
+    qDebug() << "ftpCommandFinished" << commandId << error << ftp->currentCommand();
     if (ftp->currentCommand() == QFtp::ConnectToHost) {
         if (error) {
             QMessageBox::information(this, tr("FTP"),
@@ -311,7 +307,7 @@ void FtpWindow::ftpCommandFinished(int commandId, bool error)
 //![10]
 void FtpWindow::addToList(const QUrlInfo &urlInfo)
 {
-    qDebug() << "addToList" << QString::fromUtf8(urlInfo.name().toLatin1());
+//    qDebug() << "addToList" << QString::fromUtf8(urlInfo.name().toLatin1());
     QTreeWidgetItem *item = new QTreeWidgetItem;
     item->setText(0, QString::fromUtf8(urlInfo.name().toLatin1()));
     item->setText(1, QString::number(urlInfo.size()));
@@ -336,13 +332,13 @@ void FtpWindow::processItem(QTreeWidgetItem *item, int /*column*/)
 {
     QString name = item->text(0);
     if (isDirectory.value(name)) {
-        qDebug() << "processItem";
+//        qDebug() << "processItem";
         fileList->clear();
         isDirectory.clear();
         currentPath += '/';
         currentPath += name.toUtf8();
-        qDebug() << ftp->cd(name.toUtf8());
-        qDebug() << ftp->list();
+        ftp->cd(name.toUtf8());
+        ftp->list();
         cdToParentButton->setEnabled(true);
 #ifndef QT_NO_CURSOR
         setCursor(Qt::WaitCursor);
@@ -375,7 +371,7 @@ void FtpWindow::cdToParent()
 void FtpWindow::updateDataTransferProgress(qint64 readBytes,
                                            qint64 totalBytes)
 {
-    qDebug() << "updateDataTransferProgress" << readBytes << totalBytes;
+//    qDebug() << "updateDataTransferProgress" << readBytes << totalBytes;
     progressDialog->setMaximum(totalBytes);
     progressDialog->setValue(readBytes);
 }
