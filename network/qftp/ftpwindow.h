@@ -65,11 +65,11 @@ class FtpWindow : public QDialog
 public:
     FtpWindow(QWidget *parent = 0);
     QSize sizeHint() const;
+    QString getFtpCommand();
 
     //![0]
-    QString _FromSpecialEncoding(const QString &InputStr);
-    QString _ToSpecialEncoding(const QString &InputStr);
 private slots:
+    void uploadFile();
     void connectOrDisconnect();
     void downloadFile();
     void cancelDownload();
@@ -92,6 +92,7 @@ private:
     QPushButton *cdToParentButton;
     QPushButton *connectButton;
     QPushButton *downloadButton;
+    QPushButton *uploadButton;
     QPushButton *quitButton;
     QDialogButtonBox *buttonBox;
     QProgressDialog *progressDialog;
@@ -99,6 +100,7 @@ private:
 //![1]
     QHash<QString, bool> isDirectory;
     QString currentPath;
+    QString openFilesPath;
     QFtp *ftp;
     QFile *file;
 

@@ -47,14 +47,11 @@ FtpWindow::FtpWindow(QWidget *parent)
     : QDialog(parent), ftp(0), networkSession(0)
 {
     ftpServerLabel = new QLabel(tr("Ftp &server:"));
+//    ftpServerLineEdit = new QLineEdit("ftp://ceshi:ceshi@192.168.1.93/");
     ftpServerLineEdit = new QLineEdit("ftp://ceshi:ceshi@101.201.145.136/");
     ftpServerLabel->setBuddy(ftpServerLineEdit);
 
     statusLabel = new QLabel(tr("Please enter the name of an FTP server."));
-#ifdef Q_OS_SYMBIAN
-    // Use word wrapping to fit the text on screen
-    statusLabel->setWordWrap( true );
-#endif
 
     fileList = new QTreeWidget;
     fileList->setEnabled(false);
@@ -72,10 +69,14 @@ FtpWindow::FtpWindow(QWidget *parent)
     downloadButton = new QPushButton(tr("Download"));
     downloadButton->setEnabled(false);
 
+    uploadButton = new QPushButton(tr("Upload"));
+    uploadButton->setEnabled(false);
+
     quitButton = new QPushButton(tr("Quit"));
 
     buttonBox = new QDialogButtonBox;
     buttonBox->addButton(downloadButton, QDialogButtonBox::ActionRole);
+    buttonBox->addButton(uploadButton, QDialogButtonBox::ActionRole);
     buttonBox->addButton(quitButton, QDialogButtonBox::RejectRole);
 
     progressDialog = new QProgressDialog(this);
@@ -88,27 +89,19 @@ FtpWindow::FtpWindow(QWidget *parent)
     connect(connectButton, SIGNAL(clicked()), this, SLOT(connectOrDisconnect()));
     connect(cdToParentButton, SIGNAL(clicked()), this, SLOT(cdToParent()));
     connect(downloadButton, SIGNAL(clicked()), this, SLOT(downloadFile()));
+    connect(uploadButton, SIGNAL(clicked()), this, SLOT(uploadFile()));
     connect(quitButton, SIGNAL(clicked()), this, SLOT(close()));
 
     QHBoxLayout *topLayout = new QHBoxLayout;
     topLayout->addWidget(ftpServerLabel);
     topLayout->addWidget(ftpServerLineEdit);
-#ifndef Q_OS_SYMBIAN
+
     topLayout->addWidget(cdToParentButton);
     topLayout->addWidget(connectButton);
-#else
-    // Make app better lookin on small screen
-    QHBoxLayout *topLayout2 = new QHBoxLayout;
-    topLayout2->addWidget(cdToParentButton);
-    topLayout2->addWidget(connectButton);
-#endif
 
     QVBoxLayout *mainLayout = new QVBoxLayout;
     mainLayout->addLayout(topLayout);
-#ifdef Q_OS_SYMBIAN
-    // Make app better lookin on small screen
-    mainLayout->addLayout(topLayout2);
-#endif
+
     mainLayout->addWidget(fileList);
     mainLayout->addWidget(statusLabel);
     mainLayout->addWidget(buttonBox);
@@ -145,6 +138,64 @@ QSize FtpWindow::sizeHint() const
     return QSize(500, 300);
 }
 
+QString FtpWindow::getFtpCommand()
+{
+    QString ret;
+    int command = ftp->currentCommand();
+    switch (command)
+    {
+    case 0:
+        ret = "None";
+        break;
+    case 1:
+        ret = "SetTransferMode";
+        break;
+    case 2:
+        ret = "SetProxy";
+        break;
+    case 3:
+        ret = "ConnectToHost";
+        break;
+    case 4:
+        ret = "Login";
+        break;
+    case 5:
+        ret = "Close";
+        break;
+    case 6:
+        ret = "List";
+        break;
+    case 7:
+        ret = "Cd";
+        break;
+    case 8:
+        ret = "Get";
+        break;
+    case 9:
+        ret = "Put";
+        break;
+    case 10:
+        ret = "Remove";
+        break;
+    case 11:
+        ret = "Mkdir";
+        break;
+    case 12:
+        ret = "Rmdir";
+        break;
+    case 13:
+        ret = "Rename";
+        break;
+    case 14:
+        ret = "RawCommand";
+        break;
+    default:
+        ret = "none";
+        break;
+    }
+    return ret;
+}
+
 //![0]
 void FtpWindow::connectOrDisconnect()
 {
@@ -156,6 +207,7 @@ void FtpWindow::connectOrDisconnect()
         fileList->setEnabled(false);
         cdToParentButton->setEnabled(false);
         downloadButton->setEnabled(false);
+        uploadButton->setEnabled(false);
         connectButton->setEnabled(true);
         connectButton->setText(tr("Connect"));
 #ifndef QT_NO_CURSOR
@@ -187,13 +239,16 @@ void FtpWindow::connectOrDisconnect()
     QUrl url(ftpServerLineEdit->text());
     if (!url.isValid() || url.scheme().toLower() != QLatin1String("ftp")) {
         ftp->connectToHost(ftpServerLineEdit->text(), 21);
+        qDebug() << "try to connect server" << ftpServerLineEdit->text();
         ftp->login();
     } else {
         ftp->connectToHost(url.host(), url.port(21));
 
         if (!url.userName().isEmpty()) {
+            qDebug() << "connect use userName and password";
             ftp->login(QUrl::fromPercentEncoding(url.userName().toLatin1()), url.password());
         } else {
+            qDebug() << "connect without userName and password";
             ftp->login();
         }
         if (!url.path().isEmpty())
@@ -253,7 +308,7 @@ void FtpWindow::ftpCommandFinished(int commandId, bool error)
 #ifndef QT_NO_CURSOR
     setCursor(Qt::ArrowCursor);
 #endif
-    qDebug() << "ftpCommandFinished" << commandId << error << ftp->currentCommand();
+    qDebug() << "ftpCommandFinished" << commandId << error << getFtpCommand();
     if (ftp->currentCommand() == QFtp::ConnectToHost) {
         if (error) {
             QMessageBox::information(this, tr("FTP"),
@@ -268,6 +323,7 @@ void FtpWindow::ftpCommandFinished(int commandId, bool error)
                              .arg(ftpServerLineEdit->text()));
         fileList->setFocus();
         downloadButton->setDefault(true);
+        uploadButton->setEnabled(true);
         connectButton->setEnabled(true);
         return;
     }
@@ -300,6 +356,19 @@ void FtpWindow::ftpCommandFinished(int commandId, bool error)
             fileList->addTopLevelItem(new QTreeWidgetItem(QStringList() << tr("<empty>")));
             fileList->setEnabled(false);
         }
+    } else if (ftp->currentCommand() == QFtp::Put) {
+        if (error) {
+            statusLabel->setText(tr("Canceled upload of %1.")
+                                 .arg(file->fileName()));
+            file->close();
+        } else {
+            statusLabel->setText(tr("Uploaded %1 to FTP server.")
+                                 .arg(file->fileName()));
+            file->close();
+        }
+        delete file;
+        uploadButton->setEnabled(true);
+        progressDialog->hide();
     }
 //![9]
 }
@@ -409,36 +478,38 @@ void FtpWindow::enableConnectButton()
     statusLabel->setText(tr("Please enter the name of an FTP server."));
 }
 
-QString FtpWindow::_FromSpecialEncoding(const QString &InputStr)
+void FtpWindow::uploadFile()
 {
-#ifdef Q_OS_WIN
-    return  QString::fromLocal8Bit(InputStr.toLatin1());
-#else
-    QTextCodec *codec = QTextCodec::codecForName("gbk");
-    if (codec)
-    {
-        return codec->toUnicode(InputStr.toLatin1());
-    }
-    else
-    {
-        return QString("");
-    }
-#endif
-}
+    QFileDialog::Options options;
+//        options |= QFileDialog::DontUseNativeDialog;
+    QString selectedFilter;
+    QStringList files = QFileDialog::getOpenFileNames(
+                                this, tr("Please select upload file"),
+                                openFilesPath,
+                                tr("All Files (*);;Text Files (*.txt)"),
+                                &selectedFilter,
+                                options);
+    if (files.count()) {
+        openFilesPath = files[0];
+//        openFileNamesLabel->setText(QString("[%1]").arg(files.join(", ")));
 
-QString FtpWindow::_ToSpecialEncoding(const QString &InputStr)
-{
-#ifdef Q_OS_WIN
-    return QString::fromLatin1(InputStr.toLocal8Bit());
-#else
-    QTextCodec *codec= QTextCodec::codecForName("gbk");
-    if (codec)
-    {
-        return QString::fromLatin1(codec->fromUnicode(InputStr));
+
+    //![4]
+        file = new QFile(openFilesPath);
+        QString fileName = QFileInfo(*file).fileName();
+        if (!file->open(QIODevice::ReadOnly)) {
+            QMessageBox::information(this, tr("FTP"),
+                                     tr("Unable to open the file %1: %2.")
+                                     .arg(fileName).arg(file->errorString()));
+            delete file;
+            return;
+        }
+
+//        qDebug() << fileName;
+        ftp->put(file, fileName);
+
+        progressDialog->setLabelText(tr("Uploading %1...").arg(fileName));
+        uploadButton->setEnabled(false);
+        progressDialog->exec();
     }
-    else
-    {
-        return QString("");
-    }
-#endif
 }

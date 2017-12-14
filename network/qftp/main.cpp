@@ -42,16 +42,104 @@
 #include "ftpwindow.h"
 #include <QTextCodec>
 #include <QIcon>
+#include <QTranslator>
+#include <QFile>
+#include <QDebug>
+#include <fstream>
+#include <QDateTime>
+
+#define LHT_SYNCCLIENT_VERSION_PRODOCUTNAME ("v1.0")
+#define LHT_SYNCCLIENT_CN_FILE  ("cn.qm")
+
+void InitUiByLanguage(const QString strLanguage);
+void outputMessage(QtMsgType type, const char *msg);
+
+QTranslator *m_translator;
+std::ofstream g_OutputDebug;
 
 int main(int argc, char *argv[])
 {
     Q_INIT_RESOURCE(ftp);
 
     QApplication app(argc, argv);
+
+    m_translator = new QTranslator();   //QTranslator 必须是全局的，不然会恢复默认值。
+    InitUiByLanguage("cn");
     QString strPath = QApplication::applicationDirPath();
     strPath += "/img/icon.png";
     app.setWindowIcon(QIcon(strPath));
+#ifndef QT_DEBUG
+    g_OutputDebug.open(QString(QCoreApplication::applicationDirPath() + QString("/Log/log.txt")).toStdString().c_str(),\
+                       std::ios::out | std::ios::trunc);
+    qInstallMsgHandler(outputMessage);    //注册MessageHandler
+#endif    // QT_DEBUG
+
     FtpWindow ftpWin;
     ftpWin.show();
-    return ftpWin.exec();
+    int ret = ftpWin.exec();
+    qDebug() << "close programmer";
+#ifndef QT_DEBUG
+    g_OutputDebug.flush();
+    g_OutputDebug.close();
+#endif
+    return ret;
+}
+
+void InitUiByLanguage(const QString strLanguage)
+{
+    if (strLanguage.isEmpty())
+    {
+        return;
+    }
+
+    QString strLanguageFile;
+    if(strLanguage.compare("cn") == 0)
+    {
+        strLanguageFile =qApp->applicationDirPath() + QString("/languages/%1/%2").arg(LHT_SYNCCLIENT_VERSION_PRODOCUTNAME).arg(LHT_SYNCCLIENT_CN_FILE);
+    }
+
+    if (QFile(strLanguageFile).exists())
+    {
+        m_translator->load(strLanguageFile);
+        qApp->installTranslator(m_translator);
+    }
+    else
+    {
+        qDebug() << "[guofh]authclient language file does not exists ...";
+    }
+}
+
+void outputMessage(QtMsgType type, const char *msg)
+{
+    QString text;
+    switch(type)
+    {
+    case QtDebugMsg:
+        text = QString("Debug:   ");
+        break;
+
+    case QtWarningMsg:
+        text = QString("Warning: ");
+        break;
+
+    case QtCriticalMsg:
+        text = QString("Critical:");
+        break;
+
+    case QtFatalMsg:
+        text = QString("Fatal:   ");
+        break;
+
+    default:
+        text = QString("Debug:   ");
+    }
+
+    //QString context_info = QString("File:(%1) Line:(%2)").arg(QString(context.file)).arg(context.line);
+    //QString current_date_time = QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss ddd");
+    QString current_date_time = QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss");
+    QString current_date = QString("(%1)").arg(current_date_time);
+    std::string message = qPrintable(QString("%1 %2 %3").arg(text).arg(current_date).arg(msg));
+
+    g_OutputDebug << message << "\n";
+    g_OutputDebug.flush();
 }
