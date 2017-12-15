@@ -68,6 +68,8 @@ public:
     QString getFtpCommand();
 
     //![0]
+    QString _FromSpecialEncoding(const QString &InputStr);
+    QString _ToSpecialEncoding(const QString &InputStr);
 private slots:
     void uploadFile();
     void connectOrDisconnect();

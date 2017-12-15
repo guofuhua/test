@@ -73,7 +73,10 @@ int main(int argc, char *argv[])
                        std::ios::out | std::ios::trunc);
     qInstallMsgHandler(outputMessage);    //×¢²áMessageHandler
 #endif    // QT_DEBUG
-
+    QList<QByteArray> bytearrayList = QTextCodec::availableCodecs();
+    for (int i = 0; i< bytearrayList.size(); i++) {
+        qDebug() <<bytearrayList.at(i);
+    }
     FtpWindow ftpWin;
     ftpWin.show();
     int ret = ftpWin.exec();

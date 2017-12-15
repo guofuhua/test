@@ -287,7 +287,7 @@ void FtpWindow::downloadFile()
         return;
     }
 
-    ftp->get(fileList->currentItem()->text(0).toUtf8(), file);
+    ftp->get(_ToSpecialEncoding(fileList->currentItem()->text(0)), file);
 
     progressDialog->setLabelText(tr("Downloading %1...").arg(fileName));
     downloadButton->setEnabled(false);
@@ -359,12 +359,15 @@ void FtpWindow::ftpCommandFinished(int commandId, bool error)
     } else if (ftp->currentCommand() == QFtp::Put) {
         if (error) {
             statusLabel->setText(tr("Canceled upload of %1.")
-                                 .arg(file->fileName()));
+                                 .arg(QFileInfo(*file).fileName()));
             file->close();
         } else {
             statusLabel->setText(tr("Uploaded %1 to FTP server.")
-                                 .arg(file->fileName()));
+                                 .arg(QFileInfo(*file).fileName()));
             file->close();
+            fileList->clear();
+            isDirectory.clear();
+            ftp->list();
         }
         delete file;
         uploadButton->setEnabled(true);
@@ -378,7 +381,8 @@ void FtpWindow::addToList(const QUrlInfo &urlInfo)
 {
 //    qDebug() << "addToList" << QString::fromUtf8(urlInfo.name().toLatin1());
     QTreeWidgetItem *item = new QTreeWidgetItem;
-    item->setText(0, QString::fromUtf8(urlInfo.name().toLatin1()));
+    QString name = _FromSpecialEncoding(urlInfo.name());
+    item->setText(0, name);
     item->setText(1, QString::number(urlInfo.size()));
     item->setText(2, urlInfo.owner());
     item->setText(3, urlInfo.group());
@@ -387,7 +391,7 @@ void FtpWindow::addToList(const QUrlInfo &urlInfo)
     QPixmap pixmap(urlInfo.isDir() ? ":/images/dir.png" : ":/images/file.png");
     item->setIcon(0, pixmap);
 
-    isDirectory[QString::fromUtf8(urlInfo.name().toLatin1())] = urlInfo.isDir();
+    isDirectory[urlInfo.name()] = urlInfo.isDir();
     fileList->addTopLevelItem(item);
     if (!fileList->currentItem()) {
         fileList->setCurrentItem(fileList->topLevelItem(0));
@@ -399,14 +403,14 @@ void FtpWindow::addToList(const QUrlInfo &urlInfo)
 //![11]
 void FtpWindow::processItem(QTreeWidgetItem *item, int /*column*/)
 {
-    QString name = item->text(0);
+    QString name = _ToSpecialEncoding(item->text(0));
     if (isDirectory.value(name)) {
 //        qDebug() << "processItem";
         fileList->clear();
         isDirectory.clear();
         currentPath += '/';
-        currentPath += name.toUtf8();
-        ftp->cd(name.toUtf8());
+        currentPath += name;
+        ftp->cd(name);
         ftp->list();
         cdToParentButton->setEnabled(true);
 #ifndef QT_NO_CURSOR
@@ -505,11 +509,85 @@ void FtpWindow::uploadFile()
             return;
         }
 
-//        qDebug() << fileName;
-        ftp->put(file, fileName);
+        qDebug() << fileName;
+        ftp->put(file, _ToSpecialEncoding(fileName));
 
         progressDialog->setLabelText(tr("Uploading %1...").arg(fileName));
         uploadButton->setEnabled(false);
         progressDialog->exec();
     }
+}
+
+QString GbkToUnicode(const QString &str)
+{
+    QTextCodec *codec= QTextCodec::codecForName("GBK");
+    return codec->toUnicode(str.toLatin1());
+}
+
+QString Utf8ToUnicode(const QString &str)
+{
+    QTextCodec *codec= QTextCodec::codecForName("UTF-8");
+    return codec->toUnicode(str.toLatin1());
+}
+
+QByteArray UnicodeToGbk(const QString&str)
+{
+    QTextCodec *codec= QTextCodec::codecForName("GBK");
+    return codec->fromUnicode(str);
+}
+
+QByteArray UnicodeToUtf8(const QString&str)
+{
+    QTextCodec *codec= QTextCodec::codecForName("UTF-8");
+    return codec->fromUnicode(str);
+}
+
+QString FtpWindow::_FromSpecialEncoding(const QString &InputStr)
+{
+#ifdef Q_OS_WIN
+//    qDebug() << "data" << InputStr.data();
+//    qDebug() << "toAscii" << InputStr.toAscii().toHex();
+    qDebug() << "toLatin1" << InputStr.toLatin1().toHex();
+////    qDebug() << "toCaseFolded" << InputStr.toCaseFolded().toHex();
+//    qDebug() << "toLocal8Bit" << InputStr.toLocal8Bit().toHex();
+////    qDebug() << "toLower" << InputStr.toLower().toHex();
+//    qDebug() << "toStdString.c_str" << QByteArray(InputStr.toStdString().c_str()).toHex();
+//    qDebug() << "toUtf8" << InputStr.toUtf8().toHex();
+
+//    qDebug() << bytearrayList;
+    QString ret;
+    QString unicode_str;
+    QByteArray gbk_str;
+    unicode_str = GbkToUnicode(InputStr);
+    gbk_str = UnicodeToGbk(unicode_str);
+    QByteArray gbk_local = unicode_str.toLocal8Bit();
+    qDebug() << "unicode_str" << unicode_str.toLatin1().toHex();
+//    qDebug() << unicode_str.at(0) << unicode_str.at(1) << unicode_str.at(2) << unicode_str.at(3);
+    qDebug() << "gbk_str" << gbk_str.toHex();
+    qDebug() << "gbk_local" << gbk_local.toHex();
+
+    QString unicode_utf;
+    QByteArray utf_, utf_local;
+    unicode_utf = Utf8ToUnicode(InputStr);
+    utf_ = UnicodeToUtf8(unicode_utf);
+    utf_local = unicode_utf.toUtf8();
+    qDebug() << "unicode_utf" << unicode_utf.toLatin1().toHex();
+    qDebug() << "utf_" << utf_.toHex();
+    qDebug() << "utf_local" << utf_local.toHex();
+
+    ret = unicode_str;
+    return  ret;//QString::fromLocal8Bit(InputStr.toLatin1());
+
+#else
+    return QString::fromUtf8(InputStr.toLatin1());
+#endif
+}
+
+QString FtpWindow::_ToSpecialEncoding(const QString &InputStr)
+{
+#ifdef Q_OS_WIN
+    return QString::fromLatin1(InputStr.toLocal8Bit());
+#else
+    return InputStr.toUtf8();
+#endif
 }
