@@ -52,6 +52,7 @@ FtpWindow::FtpWindow(QWidget *parent)
     ftpServerLabel->setBuddy(ftpServerLineEdit);
 
     statusLabel = new QLabel(tr("Please enter the name of an FTP server."));
+    encodeMode = new QLabel(tr("UTF-8(default)"));
 
     fileList = new QTreeWidget;
     fileList->setEnabled(false);
@@ -104,6 +105,7 @@ FtpWindow::FtpWindow(QWidget *parent)
 
     mainLayout->addWidget(fileList);
     mainLayout->addWidget(statusLabel);
+    mainLayout->addWidget(encodeMode);
     mainLayout->addWidget(buttonBox);
     setLayout(mainLayout);
 
@@ -138,64 +140,6 @@ QSize FtpWindow::sizeHint() const
     return QSize(500, 300);
 }
 
-QString FtpWindow::getFtpCommand()
-{
-    QString ret;
-    int command = ftp->currentCommand();
-    switch (command)
-    {
-    case 0:
-        ret = "None";
-        break;
-    case 1:
-        ret = "SetTransferMode";
-        break;
-    case 2:
-        ret = "SetProxy";
-        break;
-    case 3:
-        ret = "ConnectToHost";
-        break;
-    case 4:
-        ret = "Login";
-        break;
-    case 5:
-        ret = "Close";
-        break;
-    case 6:
-        ret = "List";
-        break;
-    case 7:
-        ret = "Cd";
-        break;
-    case 8:
-        ret = "Get";
-        break;
-    case 9:
-        ret = "Put";
-        break;
-    case 10:
-        ret = "Remove";
-        break;
-    case 11:
-        ret = "Mkdir";
-        break;
-    case 12:
-        ret = "Rmdir";
-        break;
-    case 13:
-        ret = "Rename";
-        break;
-    case 14:
-        ret = "RawCommand";
-        break;
-    default:
-        ret = "none";
-        break;
-    }
-    return ret;
-}
-
 //![0]
 void FtpWindow::connectOrDisconnect()
 {
@@ -214,6 +158,7 @@ void FtpWindow::connectOrDisconnect()
         setCursor(Qt::ArrowCursor);
 #endif
         statusLabel->setText(tr("Please enter the name of an FTP server."));
+        encodeMode->setText(tr("UTF-8(default)"));
         return;
     }
 
@@ -381,7 +326,7 @@ void FtpWindow::addToList(const QUrlInfo &urlInfo)
 {
 //    qDebug() << "addToList" << QString::fromUtf8(urlInfo.name().toLatin1());
     QTreeWidgetItem *item = new QTreeWidgetItem;
-    QString name = _FromSpecialEncoding(urlInfo.name());
+    QString name = getCorrectUnicode(urlInfo.name());
     item->setText(0, name);
     item->setText(1, QString::number(urlInfo.size()));
     item->setText(2, urlInfo.owner());
@@ -480,6 +425,7 @@ void FtpWindow::enableConnectButton()
 
     connectButton->setEnabled(networkSession->isOpen());
     statusLabel->setText(tr("Please enter the name of an FTP server."));
+    encodeMode->setText(tr("UTF-8(default)"));
 }
 
 void FtpWindow::uploadFile()
@@ -585,9 +531,87 @@ QString FtpWindow::_FromSpecialEncoding(const QString &InputStr)
 
 QString FtpWindow::_ToSpecialEncoding(const QString &InputStr)
 {
-#ifdef Q_OS_WIN
-    return QString::fromLatin1(InputStr.toLocal8Bit());
-#else
-    return InputStr.toUtf8();
-#endif
+    if (encodeMode->text().compare("GBK")) {
+        return UnicodeToUtf8(InputStr);
+    } else {
+        return UnicodeToGbk(InputStr);
+    }
+//#ifdef Q_OS_WIN
+//    return QString::fromLatin1(InputStr.toLocal8Bit());
+//#else
+//    return InputStr.toUtf8();
+//#endif
+}
+
+QString FtpWindow::getFtpCommand()
+{
+    QString ret;
+    int command = ftp->currentCommand();
+    switch (command)
+    {
+    case 0:
+        ret = "None";
+        break;
+    case 1:
+        ret = "SetTransferMode";
+        break;
+    case 2:
+        ret = "SetProxy";
+        break;
+    case 3:
+        ret = "ConnectToHost";
+        break;
+    case 4:
+        ret = "Login";
+        break;
+    case 5:
+        ret = "Close";
+        break;
+    case 6:
+        ret = "List";
+        break;
+    case 7:
+        ret = "Cd";
+        break;
+    case 8:
+        ret = "Get";
+        break;
+    case 9:
+        ret = "Put";
+        break;
+    case 10:
+        ret = "Remove";
+        break;
+    case 11:
+        ret = "Mkdir";
+        break;
+    case 12:
+        ret = "Rmdir";
+        break;
+    case 13:
+        ret = "Rename";
+        break;
+    case 14:
+        ret = "RawCommand";
+        break;
+    default:
+        ret = "none";
+        break;
+    }
+    return ret;
+}
+
+QString FtpWindow::getCorrectUnicode(QString input) {
+    QTextCodec::ConverterState state;
+    QTextCodec *codec = QTextCodec::codecForName("UTF-8");
+    QString text = codec->toUnicode( input.toLatin1().constData(),
+                                     input.toLatin1().size(), &state);
+    if (state.invalidChars > 0) {
+        text = QTextCodec::codecForName("GBK")->toUnicode(input.toLatin1());
+        if (encodeMode->text().compare("GBK")) {
+            encodeMode->setText("GBK");
+        }
+    }
+
+    return text;
 }

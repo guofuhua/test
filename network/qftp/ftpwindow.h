@@ -70,6 +70,7 @@ public:
     //![0]
     QString _FromSpecialEncoding(const QString &InputStr);
     QString _ToSpecialEncoding(const QString &InputStr);
+    QString getCorrectUnicode(QString input);
 private slots:
     void uploadFile();
     void connectOrDisconnect();
@@ -90,6 +91,7 @@ private:
     QLabel *ftpServerLabel;
     QLineEdit *ftpServerLineEdit;
     QLabel *statusLabel;
+    QLabel *encodeMode;
     QTreeWidget *fileList;
     QPushButton *cdToParentButton;
     QPushButton *connectButton;

@@ -10,14 +10,18 @@ class Dialog : public QDialog, private Ui::Dialog
 
 public:
     explicit Dialog(QWidget *parent = 0);
+    void parseReceiveBytes(QByteArray *receiveBytes);
+    void getFile(QByteArray databuf);
 protected:
     QTcpServer tcpServer;
     QTcpSocket *tcpSocket;
     QByteArray receiveBuf;
+    quint32 m_blockSize;
 private slots:
+    void slotReadData();
     void on_listenButton_clicked();
     void acceptConnection();
-    void receiveData();
+    void receiveData(QByteArray tmpbuf);
 };
 
 #endif // DIALOG_H

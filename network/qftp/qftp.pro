@@ -3,6 +3,7 @@ SOURCES       = ftpwindow.cpp \
                 main.cpp
 RESOURCES    += ftp.qrc
 QT           += network
+QT           += sql
 
 RC_FILE      = qftp.rc
 

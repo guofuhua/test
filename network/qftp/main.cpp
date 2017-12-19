@@ -47,6 +47,7 @@
 #include <QDebug>
 #include <fstream>
 #include <QDateTime>
+#include <QSqlDatabase>
 
 #define LHT_SYNCCLIENT_VERSION_PRODOCUTNAME ("v1.0")
 #define LHT_SYNCCLIENT_CN_FILE  ("cn.qm")
@@ -73,10 +74,11 @@ int main(int argc, char *argv[])
                        std::ios::out | std::ios::trunc);
     qInstallMsgHandler(outputMessage);    //注册MessageHandler
 #endif    // QT_DEBUG
-    QList<QByteArray> bytearrayList = QTextCodec::availableCodecs();
-    for (int i = 0; i< bytearrayList.size(); i++) {
-        qDebug() <<bytearrayList.at(i);
-    }
+//    QStringList drivers = QSqlDatabase::drivers();
+//    foreach(QString driver, drivers)  //列出Qt5所有支持的数据库类型
+//         qDebug() << "\t" << driver;
+////        QOptDbEntry es;
+
     FtpWindow ftpWin;
     ftpWin.show();
     int ret = ftpWin.exec();
@@ -108,7 +110,7 @@ void InitUiByLanguage(const QString strLanguage)
     }
     else
     {
-        qDebug() << "[guofh]authclient language file does not exists ...";
+        qDebug() << "[warning]auth client language file does not exists ...";
     }
 }
 
