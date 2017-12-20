@@ -1,0 +1,6 @@
+
+*.o
+*.exe
+foundation/Settings/debug/Makefile
+*.Debug
+*.Release
