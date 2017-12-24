@@ -13,8 +13,10 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp\
-        mainwindow.cpp
+        mainwindow.cpp \
+    QRuntimeFileSync.cpp
 
-HEADERS  += mainwindow.h
+HEADERS  += mainwindow.h \
+    QRuntimeFileSync.h
 
 FORMS    += mainwindow.ui
