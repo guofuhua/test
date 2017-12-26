@@ -9,6 +9,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     m_timer.setSingleShot(true);
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(slotTimeOut()));
+    syncRunFile.moveToThread(&thread2);
+    thread2.start();
 }
 
 MainWindow::~MainWindow()
@@ -20,6 +22,8 @@ void MainWindow::on_startButton_clicked()
 {
     int delay_time = ui->lineEdit->text().toInt();
     m_timer.start(delay_time * 1000);
+
+    syncRunFile.doSync();
 }
 
 void MainWindow::on_stopButton_clicked()

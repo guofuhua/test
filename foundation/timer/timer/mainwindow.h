@@ -3,6 +3,8 @@
 
 #include <QMainWindow>
 #include <QTimer>
+#include "QRuntimeFileSync.h"
+#include <QThread>
 
 namespace Ui {
 class MainWindow;
@@ -16,6 +18,9 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
     QTimer m_timer;
+
+    QRuntimeFileSync syncRunFile;
+    QThread thread2;
     
 private slots:
     void on_startButton_clicked();
