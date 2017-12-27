@@ -26,26 +26,28 @@ private:
     void createAudioTestGroupBox();
     void createCameraSettingGroupBox();
     void createDeviceStateGroupBox();
-    void createFormGroupBox();
-    void createGridGroupBox();
-    void createHorizontalGroupBox();
     void createImagePreviewGroupBox();
     void createMenu();
+    void createPublicInfo();
     void createStatusBar();
     void createSwitchTestGroupBox();
 
     enum { NumGridRows = 3, NumAVBoards = 3, NumButtons = 4, NumAudioCannels = 4, NumCameras = 14 };
 
     QMenuBar *menuBar;
-    QGroupBox *horizontalGroupBox;
-    QGroupBox *gridGroupBox;
-    QGroupBox *formGroupBox;
+    QMenu *languageMenu;
+    QMenu *helpMenu;
+    QAction *cheseAct;
+    QAction *englishAct;
+    QAction *aboutAct;
+    QAction *aboutQtAct;
+
+    QGroupBox *groupBoxPublicInfo;
     QGroupBox *deviceStateGroupBox;
     QGroupBox *audioTestGroupBox;
     QGroupBox *switchTestGroupBox;
     QGroupBox *cameraSettingGroupBox;
     QGroupBox *imagePreviewGroupBox;
-    QTextEdit *smallEditor;
     QTextEdit *bigEditor;
     QLabel *labels[NumGridRows];
     QLineEdit *lineEdits[NumGridRows];
@@ -99,7 +101,14 @@ private:
     QLabel *labelDataTypeOfLocomotive;    //机车类型
     QComboBox *comboBoxDataTypeOfLocomotive;
     QComboBox *comboBoxDataShunting;    //调车、非调车
-
+    QRadioButton *radioDataBen;
+    QRadioButton *radioDataBu;
+    QRadioButton *radioDataKe;
+    QRadioButton *radioDataHuo;
+    QGroupBox *groupBoxBenBu;
+    QGroupBox *groupBoxKeHuo;
+    QRadioButton *radioFourPicture;
+    QRadioButton *radioEightPicture;
 
     QMenu *fileMenu;
     QAction *exitAction;
@@ -107,7 +116,9 @@ private:
 signals:
     
 public slots:
-    
+    void about();
+    void translateChese();
+    void translateEnglish();
 };
 
 #endif // SIMULATIONDIALOG_H

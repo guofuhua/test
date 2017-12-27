@@ -1,18 +1,19 @@
 #include "SimulationDialog.h"
 
+extern void InitUiByLanguage(const QString strLanguage);
+
 SimulationDialog::SimulationDialog(QWidget *parent) :
     QDialog(parent)
 {
     createMenu();
-    createHorizontalGroupBox();
-    createGridGroupBox();
-    createFormGroupBox();
+    createPublicInfo();
     createAudioTestGroupBox();
     createCameraSettingGroupBox();
     createDeviceStateGroupBox();
     createImagePreviewGroupBox();
     createSwitchTestGroupBox();
     createStatusBar();
+    setWhatsThis(tr("Simulation Software"));
 
     bigEditor = new QTextEdit;
     bigEditor->setPlainText(tr("This widget takes up all the remaining space "
@@ -31,32 +32,30 @@ SimulationDialog::SimulationDialog(QWidget *parent) :
     statusLayout->addWidget(cameraSettingGroupBox);
     statusLayout->addWidget(imagePreviewGroupBox);
 
-    QVBoxLayout *mainLayout = new QVBoxLayout;
+    QVBoxLayout *publicInfoLayout = new QVBoxLayout;
 
-//    mainLayout->setMenuBar(menuBar);
+    publicInfoLayout->addWidget(groupBoxPublicInfo);
+    publicInfoLayout->addWidget(bigEditor);
+    publicInfoLayout->addWidget(buttonBox);
 
-    mainLayout->addWidget(horizontalGroupBox);
-    mainLayout->addWidget(gridGroupBox);
-    mainLayout->addWidget(formGroupBox);
-    mainLayout->addWidget(bigEditor);
-    mainLayout->addWidget(buttonBox);
+    QGridLayout *mainLayout = new QGridLayout;
 
-    QGridLayout *Layout = new QGridLayout;
-
-    Layout->setMenuBar(menuBar);
+    mainLayout->setMenuBar(menuBar);
 //    Layout->setSpacing(50);
 //    statusLayout->setSpacing(25);
 //    mainLayout->setSpacing(25);
-    Layout->addLayout(statusLayout, 0, 0);
-    Layout->addLayout(mainLayout, 0, 1);
+    mainLayout->addLayout(statusLayout, 0, 0);
+    mainLayout->addLayout(publicInfoLayout, 0, 1);
 
 
-    Layout->addWidget(labelCompany, 1, 0);
-    Layout->addWidget(labelStatus, 1,1);
+    mainLayout->addWidget(labelCompany, 1, 0);
+    mainLayout->addWidget(labelStatus, 1,1);
+    mainLayout->setColumnStretch(0,1);
+    mainLayout->setColumnStretch(1,1);
 
-    setLayout(Layout);
+    setLayout(mainLayout);
 
-    setWindowTitle(tr("Basic Layouts"));
+    setWindowTitle(tr("Simulate 6A communication V1.0"));
 }
 
 void SimulationDialog::createAudioTestGroupBox()
@@ -67,10 +66,12 @@ void SimulationDialog::createAudioTestGroupBox()
 
     for (int i = 0; i < NumAudioCannels; ++i) {
         buttonRecordSound[i] = new QPushButton(tr("Channel %1 Record").arg(i + 1));
+        buttonRecordSound[i]->setFlat(true);
         layout->addWidget(buttonRecordSound[i], 0, i);
     }
     for (int i = 0; i < NumAudioCannels; ++i) {
         buttonPlaySound[i] = new QPushButton(tr("Channel %1 Play").arg(i + 1));
+        buttonPlaySound[i]->setFlat(true);
         layout->addWidget(buttonPlaySound[i], 1, i);
     }
     audioTestGroupBox->setLayout(layout);
@@ -118,56 +119,15 @@ void SimulationDialog::createDeviceStateGroupBox()
     deviceStateGroupBox->setLayout(layout);
 }
 
-
-void SimulationDialog::createFormGroupBox()
-{
-    formGroupBox = new QGroupBox(tr("Form layout"));
-    QFormLayout *layout = new QFormLayout;
-    layout->addRow(new QLabel(tr("Line 1:")), new QLineEdit);
-    layout->addRow(new QLabel(tr("Line 2, long text:")), new QComboBox);
-    layout->addRow(new QLabel(tr("Line 3:")), new QSpinBox);
-    formGroupBox->setLayout(layout);
-}
-
-
-void SimulationDialog::createGridGroupBox()
-{
-    gridGroupBox = new QGroupBox(tr("Grid layout"));
-
-    QGridLayout *layout = new QGridLayout;
-
-    for (int i = 0; i < NumGridRows; ++i) {
-        labels[i] = new QLabel(tr("Line %1:").arg(i + 1));
-        lineEdits[i] = new QLineEdit;
-        layout->addWidget(labels[i], i + 1, 0);
-        layout->addWidget(lineEdits[i], i + 1, 1);
-    }
-
-    smallEditor = new QTextEdit;
-    smallEditor->setPlainText(tr("This widget takes up about two thirds of the "
-                                 "grid layout."));
-    layout->addWidget(smallEditor, 0, 2, 4, 1);
-
-    layout->setColumnStretch(1, 10);
-    layout->setColumnStretch(2, 20);
-    gridGroupBox->setLayout(layout);
-}
-
-void SimulationDialog::createHorizontalGroupBox()
-{
-    horizontalGroupBox = new QGroupBox(tr("Horizontal layout"));
-    QHBoxLayout *layout = new QHBoxLayout;
-
-    for (int i = 0; i < NumButtons; ++i) {
-        buttons[i] = new QPushButton(tr("Button %1").arg(i + 1));
-        layout->addWidget(buttons[i]);
-    }
-    horizontalGroupBox->setLayout(layout);
-}
-
 void SimulationDialog::createImagePreviewGroupBox()
 {
     imagePreviewGroupBox = new QGroupBox(tr("Image Preview"));
+    radioFourPicture    = new QRadioButton(tr("Four Picture"));
+    radioEightPicture   = new QRadioButton(tr("Eight Picture"));
+    QHBoxLayout *hbox   = new QHBoxLayout;
+    hbox->addWidget(radioFourPicture);
+    hbox->addWidget(radioEightPicture);
+    imagePreviewGroupBox->setLayout(hbox);
 }
 
 void SimulationDialog::createMenu()
@@ -177,8 +137,150 @@ void SimulationDialog::createMenu()
     fileMenu = new QMenu(tr("&File"), this);
     exitAction = fileMenu->addAction(tr("E&xit"));
     menuBar->addMenu(fileMenu);
-
     connect(exitAction, SIGNAL(triggered()), this, SLOT(accept()));
+
+    aboutAct = new QAction(tr("&About"), this);
+    aboutAct->setStatusTip(tr("Show the application's About box"));
+    connect(aboutAct, SIGNAL(triggered()), this, SLOT(about()));
+
+    aboutQtAct = new QAction(tr("About &Qt"), this);
+    aboutQtAct->setStatusTip(tr("Show the Qt library's About box"));
+    connect(aboutQtAct, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
+
+    cheseAct = new QAction(QString::fromUtf8("\xE4\xB8\xAD\xE6\x96\x87"), this);
+    cheseAct->setStatusTip(tr("Language choice chese"));
+    connect(cheseAct, SIGNAL(triggered()), this, SLOT(translateChese()));
+
+    englishAct = new QAction("English", this);
+    englishAct->setStatusTip(tr("Language choice english"));
+    connect(englishAct, SIGNAL(triggered()), this, SLOT(translateEnglish()));
+
+    languageMenu = menuBar->addMenu(tr("&Language"));
+    languageMenu->addAction(cheseAct);
+    languageMenu->addSeparator();
+    languageMenu->addAction(englishAct);
+
+    helpMenu = menuBar->addMenu(tr("&Help"));
+    helpMenu->addAction(aboutAct);
+    helpMenu->addAction(aboutQtAct);
+}
+
+void SimulationDialog::createPublicInfo()
+{
+    groupBoxPublicInfo = new QGroupBox();
+
+    QGridLayout *layout = new QGridLayout;
+
+    labelDataTypeOfLocomotive           = new QLabel(tr("Type Of Locomotive"));
+    labelDataTrainNumber                = new QLabel(tr("Train Number"));
+    labelDataTheSenderID                = new QLabel(tr("The Sender ID"));
+    labelDataStationNo                  = new QLabel(tr("Station No"));
+    labelDataSpeed                      = new QLabel(tr("Speed"));
+    labelDataReconnectionInformation    = new QLabel(tr("Reconnection Information"));
+    labelDataNumberOfVehicles           = new QLabel(tr("Number Of Vehicles"));
+    labelDataLocomotiveWorkingCondition = new QLabel(tr("Locomotive Working Condition"));
+    labelDataChauffeurOccupancy         = new QLabel(tr("Chauffeur Occupancy"));
+    labelDataDeviceStatus               = new QLabel(tr("Device Status"));
+    labelDataDriverNumber               = new QLabel(tr("Driver Number"));
+    labelDataIntersectionNumber         = new QLabel(tr("Intersection Number"));
+    labelDataKilometerPost              = new QLabel(tr("Kilomete rPost"));
+    labelDataLengthCounting             = new QLabel(tr("Length Counting"));
+    labelDataLocomotiveNumber           = new QLabel(tr("Locomotive Number"));
+
+    lineEditDataStationNo           = new QLineEdit("5");
+    lineEditDataSpeed               = new QLineEdit("0");
+    lineEditDataNumberOfVehicles    = new QLineEdit("16");
+    lineEditDataDriverNumber        = new QLineEdit("4220342");
+    lineEditDataIntersectionNumber  = new QLineEdit("33");
+    lineEditDataKilometerPost       = new QLineEdit("108");
+    lineEditDataLengthCounting      = new QLineEdit("42");
+    lineEditDataLocomotiveNumber    = new QLineEdit("33");
+    lineEditDataTrainNumber1        = new QLineEdit("K");
+    lineEditDataTrainNumber2        = new QLineEdit("800");
+
+    comboBoxDataTypeOfLocomotive            = new QComboBox(); //机车类型
+    comboBoxDataTheSenderID                 = new QComboBox();
+    comboBoxDataReconnectionInformation     = new QComboBox();
+    comboBoxDataLocomotiveWorkingCondition  = new QComboBox();
+    comboBoxDataChauffeurOccupancy          = new QComboBox();
+    comboBoxDataDeviceStatus                = new QComboBox();
+    comboBoxDataShunting                    = new QComboBox();
+
+    QStringList comboBoxItem;
+    comboBoxItem << tr("HXD2B") << tr("TA") << tr("DF9") << tr("DF7D") << tr("SS7D") << tr("SS3") << tr("NY7") << tr("GK1A") << tr("XSG") << tr("DF3");
+    comboBoxDataTypeOfLocomotive->addItems(comboBoxItem);
+    comboBoxItem.clear();
+    comboBoxItem << "1" << "2";
+    comboBoxDataTheSenderID->addItems(comboBoxItem);
+    comboBoxItem.clear();
+    comboBoxItem << tr("unknown") << tr("reconnexion") << tr("non-reconnexion");
+    comboBoxDataReconnectionInformation->addItems(comboBoxItem);
+    comboBoxItem.clear();
+    comboBoxItem << tr("nonzero") << tr("zero") << tr("backward") << tr("forward") << tr("drag") << tr("braking");
+    comboBoxDataLocomotiveWorkingCondition->addItems(comboBoxItem);
+    comboBoxItem.clear();
+    comboBoxItem << tr("unknown") << tr("one occupation") << tr("two occupation") << tr("all occupation");
+    comboBoxDataChauffeurOccupancy->addItems(comboBoxItem);
+    comboBoxItem.clear();
+    comboBoxItem << tr("monitor") << tr("degrade");
+    comboBoxDataDeviceStatus->addItems(comboBoxItem);
+    comboBoxItem.clear();
+    comboBoxItem << tr("non shunting") << tr("shunting");
+    comboBoxDataShunting->addItems(comboBoxItem);
+
+    radioDataBen    = new QRadioButton(tr("Leading"));
+    radioDataBu     = new QRadioButton(tr("Assisting"));
+    radioDataHuo    = new QRadioButton(tr("Freight"));
+    radioDataKe     = new QRadioButton(tr("Passenger"));
+    groupBoxBenBu   = new QGroupBox();
+    groupBoxKeHuo   = new QGroupBox();
+    radioDataBen->setChecked(true);
+    radioDataHuo->setChecked(true);
+    QHBoxLayout *hbox = new QHBoxLayout;
+    hbox->addWidget(radioDataBen);
+    hbox->addWidget(radioDataBu);
+    groupBoxBenBu->setLayout(hbox);
+    hbox = new QHBoxLayout;
+    hbox->addWidget(radioDataHuo);
+    hbox->addWidget(radioDataKe);
+    groupBoxKeHuo->setLayout(hbox);
+
+    layout->addWidget(labelDataKilometerPost, 0, 0);
+    layout->addWidget(lineEditDataKilometerPost, 0, 1);
+    layout->addWidget(labelDataSpeed, 0, 2);
+    layout->addWidget(lineEditDataSpeed, 0, 3);
+    layout->addWidget(groupBoxBenBu, 0, 4, 2, 2);
+    layout->addWidget(labelDataLengthCounting, 1, 0);
+    layout->addWidget(lineEditDataLengthCounting, 1, 1);
+    layout->addWidget(labelDataNumberOfVehicles, 1, 2);
+    layout->addWidget(lineEditDataNumberOfVehicles, 1, 3);
+    layout->addWidget(labelDataStationNo, 2, 0);
+    layout->addWidget(lineEditDataStationNo, 2, 1);
+    layout->addWidget(labelDataDriverNumber, 2, 2);
+    layout->addWidget(lineEditDataDriverNumber, 2, 3);
+    layout->addWidget(groupBoxKeHuo, 2, 4, 2, 2);
+    layout->addWidget(labelDataChauffeurOccupancy, 3, 0);
+    layout->addWidget(comboBoxDataChauffeurOccupancy, 3, 1);
+    layout->addWidget(labelDataReconnectionInformation, 3, 2);
+    layout->addWidget(comboBoxDataReconnectionInformation, 3, 3);
+    layout->addWidget(labelDataDeviceStatus, 4, 0);
+    layout->addWidget(comboBoxDataDeviceStatus, 4, 1);
+    layout->addWidget(comboBoxDataShunting, 4, 2);
+    layout->addWidget(labelDataTrainNumber, 5, 0);
+    layout->addWidget(lineEditDataTrainNumber1, 5, 1);
+    layout->addWidget(lineEditDataTrainNumber2, 5, 2);
+    layout->addWidget(labelDataTheSenderID, 5, 3);
+    layout->addWidget(comboBoxDataTheSenderID, 5, 4);
+    layout->addWidget(labelDataIntersectionNumber, 6, 0);
+    layout->addWidget(lineEditDataIntersectionNumber, 6, 1);
+    layout->addWidget(labelDataLocomotiveWorkingCondition, 6, 2);
+    layout->addWidget(comboBoxDataLocomotiveWorkingCondition, 6, 3);
+    layout->addWidget(labelDataTypeOfLocomotive, 7, 0);
+    layout->addWidget(comboBoxDataTypeOfLocomotive, 7, 1);
+    layout->addWidget(labelDataLocomotiveNumber, 8, 0);
+    layout->addWidget(lineEditDataLocomotiveNumber, 8, 1);
+
+    groupBoxPublicInfo->setLayout(layout);
 }
 
 void SimulationDialog::createStatusBar()
@@ -194,9 +296,29 @@ void SimulationDialog::createSwitchTestGroupBox()
 
     buttonSwitchInTest = new QPushButton(tr("Switch In Test"));
     buttonSwitchOutTest = new QPushButton(tr("Switch Out Test"));
+    buttonSwitchInTest->setFlat(true);
+    buttonSwitchOutTest->setFlat(true);
     layout->addWidget(buttonSwitchOutTest);
     layout->addWidget(buttonSwitchInTest);
 
     switchTestGroupBox->setLayout(layout);
+}
+
+void SimulationDialog::about()
+{
+    QMessageBox::about(this, tr("About Application"),
+                       tr("The <b>Application</b> example demonstrates how to "
+                          "write modern GUI applications using Qt, with a menu bar, "
+                          "toolbars, and a status bar."));
+}
+
+void SimulationDialog::translateChese()
+{
+    InitUiByLanguage("chese");
+}
+
+void SimulationDialog::translateEnglish()
+{
+    InitUiByLanguage("english");
 }
 

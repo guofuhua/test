@@ -2,6 +2,8 @@
 #include <QtGui>
 #include "SimulationDialog.h"
 
+extern void InitUiByLanguage(const QString strLanguage);
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
@@ -29,6 +31,16 @@ void MainWindow::about()
                           "toolbars, and a status bar."));
 }
 
+void MainWindow::translateChese()
+{
+    InitUiByLanguage("chese");
+}
+
+void MainWindow::translateEnglish()
+{
+    InitUiByLanguage("english");
+}
+
 
 void MainWindow::createActions()
 {
@@ -39,7 +51,6 @@ void MainWindow::createActions()
 
     exitAct = new QAction(tr("&Exit"), this);
     exitAct->setShortcuts(QKeySequence::Quit);
-
     exitAct->setStatusTip(tr("Exit the application"));
     connect(exitAct, SIGNAL(triggered()), this, SLOT(close()));
 
@@ -50,6 +61,15 @@ void MainWindow::createActions()
     aboutQtAct = new QAction(tr("About &Qt"), this);
     aboutQtAct->setStatusTip(tr("Show the Qt library's About box"));
     connect(aboutQtAct, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
+
+//   "\x4E2D\x6587"
+    cheseAct = new QAction(QString::fromUtf8("\xE4\xB8\xAD\xE6\x96\x87"), this);
+    cheseAct->setStatusTip(tr("Language choice chese"));
+    connect(cheseAct, SIGNAL(triggered()), this, SLOT(translateChese()));
+
+    englishAct = new QAction("English", this);
+    englishAct->setStatusTip(tr("Language choice english"));
+    connect(englishAct, SIGNAL(triggered()), this, SLOT(translateEnglish()));
 }
 
 
@@ -61,6 +81,11 @@ void MainWindow::createMenus()
 
     fileMenu->addSeparator();
     fileMenu->addAction(exitAct);
+
+    languageMenu = menuBar()->addMenu(tr("&Language"));
+    languageMenu->addAction(cheseAct);
+    languageMenu->addSeparator();
+    languageMenu->addAction(englishAct);
 
     helpMenu = menuBar()->addMenu(tr("&Help"));
     helpMenu->addAction(aboutAct);

@@ -6,3 +6,4 @@ foundation/Settings/debug/Makefile
 *.Release
 *-build-desktop*/
 debug/
+target/

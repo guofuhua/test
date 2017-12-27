@@ -14,28 +14,21 @@ public:
 private slots:
     void open();
     void about();
+    void translateChese();
+    void translateEnglish();
 
 private:
     void createActions();
     void createMenus();
     void createStatusBar();
-    QString strippedName(const QString &fullFileName);
-
-    QString curFile;
 
     QMenu *fileMenu;
-    QMenu *editMenu;
+    QMenu *languageMenu;
     QMenu *helpMenu;
-    QToolBar *fileToolBar;
-    QToolBar *editToolBar;
-    QAction *newAct;
+    QAction *cheseAct;
+    QAction *englishAct;
     QAction *openAct;
-    QAction *saveAct;
-    QAction *saveAsAct;
     QAction *exitAct;
-    QAction *cutAct;
-    QAction *copyAct;
-    QAction *pasteAct;
     QAction *aboutAct;
     QAction *aboutQtAct;
 };
