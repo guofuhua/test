@@ -3,6 +3,9 @@
 
 #include <QDialog>
 #include <QtGui>
+#include "QPrePublicPctl.h"
+#include "QUdpEntry.h"
+#include "QUdpRecieveThread.h"
 
 QT_BEGIN_NAMESPACE
 class QAction;
@@ -23,16 +26,21 @@ public:
     explicit SimulationDialog(QWidget *parent = 0);
 
 private:
+    void changeEvent(QEvent *event);
     void createAudioTestGroupBox();
     void createCameraSettingGroupBox();
     void createDeviceStateGroupBox();
+    void createFireResistanceLinkage();
     void createImagePreviewGroupBox();
     void createMenu();
     void createPublicInfo();
     void createStatusBar();
     void createSwitchTestGroupBox();
+    void createTimer();
+    void setPublicInfo();
+    void translateUI();
 
-    enum { NumGridRows = 3, NumAVBoards = 3, NumButtons = 4, NumAudioCannels = 4, NumCameras = 14 };
+    enum { NumGridRows = 3, NumAVBoards = 3, NumButtons = 4, NumAudioCannels = 4, NumCameras = 14, NumFirePropes = 32 };
 
     QMenuBar *menuBar;
     QMenu *languageMenu;
@@ -96,8 +104,8 @@ private:
     QComboBox *comboBoxDataDeviceStatus;
     QLabel *labelDataLocomotiveWorkingCondition;    //机车工况
     QComboBox *comboBoxDataLocomotiveWorkingCondition;
-    QLabel *labelDataTheSenderID;    //发送方ID
-    QComboBox *comboBoxDataTheSenderID;
+//    QLabel *labelDataTheSenderID;    //发送方ID
+//    QComboBox *comboBoxDataTheSenderID;
     QLabel *labelDataTypeOfLocomotive;    //机车类型
     QComboBox *comboBoxDataTypeOfLocomotive;
     QComboBox *comboBoxDataShunting;    //调车、非调车
@@ -109,6 +117,18 @@ private:
     QGroupBox *groupBoxKeHuo;
     QRadioButton *radioFourPicture;
     QRadioButton *radioEightPicture;
+    QPushButton *buttonStart;
+    QPushButton *buttonStop;
+
+    QGroupBox *groupBoxFireProof;
+    QButtonGroup *buttonGroupFireProof;
+    QPushButton *buttonFireAlarmProbe[NumFirePropes];
+
+    QTimer *timerSendTime;
+
+    QPrePublicPctl *prePublicPctl;
+    QUdpEntry *udpEntry;
+    QUdpRecieveThread *udpReceiveThread;
 
     QMenu *fileMenu;
     QAction *exitAction;
@@ -117,6 +137,9 @@ signals:
     
 public slots:
     void about();
+    void slotSendTime();
+    void slotStart();
+    void slotStop();
     void translateChese();
     void translateEnglish();
 };

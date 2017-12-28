@@ -3,6 +3,7 @@
 #include <QTranslator>
 #include <QFile>
 #include <QDebug>
+#include "SimulationDialog.h"
 
 #define LANGUAGE_CN_FILE  ("chese.qm")
 #define LANGUAGE_EN_FILE  ("english.qm")
@@ -15,10 +16,15 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
     m_translator = new QTranslator();   //QTranslator 必须是全局的，不然会恢复默认值。
     InitUiByLanguage("chese");
+    qApp->installTranslator(m_translator);
 
-    MainWindow w;
-    w.show();
-    
+//    MainWindow w;
+//    w.show();
+
+    SimulationDialog dialog;
+    dialog.show();
+//    qDebug() << dialog.exec();
+
     return a.exec();
 }
 
@@ -41,7 +47,6 @@ void InitUiByLanguage(const QString strLanguage)
     if (QFile(strLanguageFile).exists())
     {
         m_translator->load(strLanguageFile);
-        qApp->installTranslator(m_translator);
     }
     else
     {

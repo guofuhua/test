@@ -1,6 +1,8 @@
 #include "SimulationDialog.h"
+#include "comment.h"
 
 extern void InitUiByLanguage(const QString strLanguage);
+extern STM32Data g_taxData;
 
 SimulationDialog::SimulationDialog(QWidget *parent) :
     QDialog(parent)
@@ -13,17 +15,20 @@ SimulationDialog::SimulationDialog(QWidget *parent) :
     createImagePreviewGroupBox();
     createSwitchTestGroupBox();
     createStatusBar();
+    createTimer();
     setWhatsThis(tr("Simulation Software"));
 
     bigEditor = new QTextEdit;
     bigEditor->setPlainText(tr("This widget takes up all the remaining space "
                                "in the top-level layout."));
 
-    buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok
-                                     | QDialogButtonBox::Cancel);
+    buttonBox = new QDialogButtonBox();
 
-    connect(buttonBox, SIGNAL(accepted()), this, SLOT(accept()));
-    connect(buttonBox, SIGNAL(rejected()), this, SLOT(reject()));
+    buttonStart = buttonBox->addButton(tr("Start"), QDialogButtonBox::ActionRole);
+    buttonStart->setCheckable(true);
+    buttonStop = buttonBox->addButton(tr("Stop"), QDialogButtonBox::ActionRole);
+    connect(buttonStart, SIGNAL(clicked()), this, SLOT(slotStart()));
+    connect(buttonStop, SIGNAL(clicked()), this, SLOT(slotStop()));
 
     QVBoxLayout *statusLayout = new QVBoxLayout;
     statusLayout->addWidget(deviceStateGroupBox);
@@ -56,6 +61,33 @@ SimulationDialog::SimulationDialog(QWidget *parent) :
     setLayout(mainLayout);
 
     setWindowTitle(tr("Simulate 6A communication V1.0"));
+
+    translateUI();
+    prePublicPctl = QPrePublicPctl::getInstance();
+    udpEntry = QUdpEntry::getInstance();
+    udpReceiveThread = new QUdpRecieveThread();
+    connect(prePublicPctl, SIGNAL(signalSendUdpData(QByteArray&)), udpEntry, SLOT(slotSendUdpData(QByteArray&)));
+}
+
+void SimulationDialog::about()
+{
+    QMessageBox::about(this, tr("About Application"),
+                       tr("The <b>Application</b> example demonstrates how to "
+                          "write modern GUI applications using Qt, with a menu bar, "
+                          "toolbars, and a status bar."));
+}
+
+void SimulationDialog::changeEvent(QEvent *event)
+{
+    switch (event->type())
+    {
+    case QEvent::LanguageChange:
+        qDebug() << "--------------";
+        translateUI();
+        break;
+    default:
+        QDialog::changeEvent(event);
+    }
 }
 
 void SimulationDialog::createAudioTestGroupBox()
@@ -119,6 +151,19 @@ void SimulationDialog::createDeviceStateGroupBox()
     deviceStateGroupBox->setLayout(layout);
 }
 
+void SimulationDialog::createFireResistanceLinkage()
+{
+    buttonGroupFireProof = new QButtonGroup();
+    QGridLayout *layout = new QGridLayout;
+    for (int i = 0; i < NumFirePropes; i++) {
+        buttonFireAlarmProbe[i] = new QPushButton(tr("prope %1").arg(i));
+        buttonFireAlarmProbe[i]->setCheckable(true);
+        buttonGroupFireProof->addButton(buttonFireAlarmProbe[i], i);
+        layout->addWidget(buttonFireAlarmProbe[i], i / 6, i % 6);
+    }
+    buttonGroupFireProof->setExclusive(true);
+}
+
 void SimulationDialog::createImagePreviewGroupBox()
 {
     imagePreviewGroupBox = new QGroupBox(tr("Image Preview"));
@@ -173,7 +218,7 @@ void SimulationDialog::createPublicInfo()
 
     labelDataTypeOfLocomotive           = new QLabel(tr("Type Of Locomotive"));
     labelDataTrainNumber                = new QLabel(tr("Train Number"));
-    labelDataTheSenderID                = new QLabel(tr("The Sender ID"));
+//    labelDataTheSenderID                = new QLabel(tr("The Sender ID"));
     labelDataStationNo                  = new QLabel(tr("Station No"));
     labelDataSpeed                      = new QLabel(tr("Speed"));
     labelDataReconnectionInformation    = new QLabel(tr("Reconnection Information"));
@@ -199,7 +244,7 @@ void SimulationDialog::createPublicInfo()
     lineEditDataTrainNumber2        = new QLineEdit("800");
 
     comboBoxDataTypeOfLocomotive            = new QComboBox(); //机车类型
-    comboBoxDataTheSenderID                 = new QComboBox();
+//    comboBoxDataTheSenderID                 = new QComboBox();
     comboBoxDataReconnectionInformation     = new QComboBox();
     comboBoxDataLocomotiveWorkingCondition  = new QComboBox();
     comboBoxDataChauffeurOccupancy          = new QComboBox();
@@ -211,7 +256,7 @@ void SimulationDialog::createPublicInfo()
     comboBoxDataTypeOfLocomotive->addItems(comboBoxItem);
     comboBoxItem.clear();
     comboBoxItem << "1" << "2";
-    comboBoxDataTheSenderID->addItems(comboBoxItem);
+//    comboBoxDataTheSenderID->addItems(comboBoxItem);
     comboBoxItem.clear();
     comboBoxItem << tr("unknown") << tr("reconnexion") << tr("non-reconnexion");
     comboBoxDataReconnectionInformation->addItems(comboBoxItem);
@@ -269,8 +314,8 @@ void SimulationDialog::createPublicInfo()
     layout->addWidget(labelDataTrainNumber, 5, 0);
     layout->addWidget(lineEditDataTrainNumber1, 5, 1);
     layout->addWidget(lineEditDataTrainNumber2, 5, 2);
-    layout->addWidget(labelDataTheSenderID, 5, 3);
-    layout->addWidget(comboBoxDataTheSenderID, 5, 4);
+//    layout->addWidget(labelDataTheSenderID, 5, 3);
+//    layout->addWidget(comboBoxDataTheSenderID, 5, 4);
     layout->addWidget(labelDataIntersectionNumber, 6, 0);
     layout->addWidget(lineEditDataIntersectionNumber, 6, 1);
     layout->addWidget(labelDataLocomotiveWorkingCondition, 6, 2);
@@ -304,12 +349,115 @@ void SimulationDialog::createSwitchTestGroupBox()
     switchTestGroupBox->setLayout(layout);
 }
 
-void SimulationDialog::about()
+void SimulationDialog::createTimer()
 {
-    QMessageBox::about(this, tr("About Application"),
-                       tr("The <b>Application</b> example demonstrates how to "
-                          "write modern GUI applications using Qt, with a menu bar, "
-                          "toolbars, and a status bar."));
+    timerSendTime = new QTimer();
+    timerSendTime->setInterval(1000);
+    connect(timerSendTime, SIGNAL(timeout()), this, SLOT(slotSendTime()));
+}
+
+void SimulationDialog::setPublicInfo()
+{
+    g_taxData.m_kmMark = lineEditDataKilometerPost->text().toInt();
+    g_taxData.m_realSpeed = lineEditDataSpeed->text().toInt();
+    g_taxData.m_strTrainCode = lineEditDataTrainNumber1->text() + lineEditDataTrainNumber2->text();
+    g_taxData.m_trainNum = lineEditDataLocomotiveNumber->text().toInt();
+    switch (comboBoxDataLocomotiveWorkingCondition->currentIndex()) {
+    case 0:
+        g_taxData.m_handlePosition = 0;
+        break;
+    case 1:
+        g_taxData.m_handlePosition = 1;
+        break;
+    case 2:
+        g_taxData.m_cheWei = STM32Data::DBack;
+        break;
+    case 3:
+        g_taxData.m_cheWei = STM32Data::DForword;
+        break;
+    case 4:
+        g_taxData.m_bDrag = true;
+        break;
+    case 5:
+        g_taxData.m_bBreak = true;
+        break;
+    default:
+        qDebug() << "setPublicInfo unknown case :" << comboBoxDataLocomotiveWorkingCondition->currentText();
+        break;
+    }
+    g_taxData.m_iRoomUsed = comboBoxDataChauffeurOccupancy->currentIndex();
+    g_taxData.m_bDownLevel = comboBoxDataDeviceStatus->currentIndex();
+    g_taxData.m_bShuntingFlag = comboBoxDataShunting->currentIndex();
+    g_taxData.m_bReConnect = comboBoxDataReconnectionInformation->currentIndex();
+    if (radioDataBen->isChecked()) {
+        g_taxData.m_trainType = STM32Data::BENWU;
+    } else {
+        g_taxData.m_trainType = STM32Data::BUJI;
+    }
+    if (radioDataHuo->isChecked()) {
+        g_taxData.m_bPassengerTrain = false;
+    } else {
+        g_taxData.m_bPassengerTrain = true;
+    }
+    g_taxData.m_iCountLong = lineEditDataLengthCounting->text().toInt();
+    g_taxData.m_iCountNumer = lineEditDataNumberOfVehicles->text().toInt();
+    g_taxData.m_stationNum = lineEditDataStationNo->text().toInt();
+    g_taxData.m_driverNum = lineEditDataDriverNumber->text().toInt();
+    g_taxData.m_segmentNum = lineEditDataIntersectionNumber->text().toInt();
+    switch (comboBoxDataTypeOfLocomotive->currentIndex()) {
+    case 0:
+        g_taxData.m_trainModel = 235;
+        break;
+    case 1:
+        g_taxData.m_trainModel = 139;
+        break;
+    case 2:
+        g_taxData.m_trainModel = 112;
+        break;
+    case 3:
+        g_taxData.m_trainModel = 136;
+        break;
+    case 4:
+        g_taxData.m_trainModel = 217;
+        break;
+    case 5:
+        g_taxData.m_trainModel = 206;
+        break;
+    case 6:
+        g_taxData.m_trainModel = 126;
+        break;
+    case 7:
+        g_taxData.m_trainModel = 137;
+        break;
+    case 8:
+        g_taxData.m_trainModel = 149;
+        break;
+    case 9:
+        g_taxData.m_trainModel = 103;
+        break;
+    default:
+        qDebug() << "setPublicInfo unknown Type Of Locomotive case :" << comboBoxDataTypeOfLocomotive->currentText();
+        break;
+    }
+}
+
+void SimulationDialog::slotSendTime()
+{
+    setPublicInfo();
+    prePublicPctl->pdtTimePlt();
+}
+
+void SimulationDialog::slotStart()
+{
+    timerSendTime->start();
+}
+
+void SimulationDialog::slotStop()
+{
+    if (buttonStart->isChecked()) {
+        buttonStart->setChecked(false);
+    }
+    timerSendTime->stop();
 }
 
 void SimulationDialog::translateChese()
@@ -321,4 +469,12 @@ void SimulationDialog::translateEnglish()
 {
     InitUiByLanguage("english");
 }
+
+void SimulationDialog::translateUI()
+{
+    buttonStart->setText(tr("Start"));
+    buttonStop->setText(tr("Stop"));
+    qDebug() << "set start";
+}
+
 

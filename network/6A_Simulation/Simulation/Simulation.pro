@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui
+QT       += core gui network
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -16,7 +16,14 @@ TRANSLATIONS += chese.ts\
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-    SimulationDialog.cpp
+    SimulationDialog.cpp \
+    QUdpRecieveThread.cpp \
+    QUdpEntry.cpp \
+    QPrePublicPctl.cpp
 
 HEADERS  += mainwindow.h \
-    SimulationDialog.h
+    SimulationDialog.h \
+    QUdpRecieveThread.h \
+    QUdpEntry.h \
+    QPrePublicPctl.h \
+    comment.h
