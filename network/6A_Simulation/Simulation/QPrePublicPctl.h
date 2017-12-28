@@ -30,7 +30,7 @@ public:
     void pdtPublicPtl();
     void pdtTrainNumberPlt();
     void pdtTimePlt();
-    void sendUdpData(QByteArray &_bArrayData);
+    QString pdtFireInfo();
     static QPrePublicPctl* getInstance()
       {
           static QPrePublicPctl instance;

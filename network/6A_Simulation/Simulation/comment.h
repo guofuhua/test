@@ -174,4 +174,21 @@ typedef struct TImageInfo
     unsigned char m_uImageType;//图像格式
     QByteArray m_bytePictureData;//图像数据 数据
 }TImageInfo;
+
+struct TFireCamera
+{
+    uchar camera[4];
+};
+
+//视频图片报文
+typedef struct TFireInfo
+{
+    quint16 sync;//硬盘故障
+    quint16 length;//采集卡1故障
+    uchar type;//采集卡2故障
+    uchar count;//摄像头自检 -16通道 每位一通道
+    quint16 none;//图像通道
+    struct TFireCamera fireProbe[32];//图像格式
+    char check_bit;//图像数据 数据
+}TFireInfo;
 #endif // COMMENT_H

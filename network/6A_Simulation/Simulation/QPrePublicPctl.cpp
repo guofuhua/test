@@ -3,9 +3,11 @@
 #include <string.h>
 #include <windows.h>
 #include <QRegExp>
+#include <QDebug>
 
 
 STM32Data g_taxData;
+extern TFireInfo g_FireInfo;
 uchar verifyData(unsigned char* _data,int _lgth);
 QPrePublicPctl::QPrePublicPctl(QObject *parent) : QObject(parent)
 {
@@ -273,10 +275,18 @@ void QPrePublicPctl::pdtTimePlt()
 
     emit signalSendUdpData(tempArray);
 }
-void QPrePublicPctl::sendUdpData(QByteArray &_bArrayData)
+
+QString QPrePublicPctl::pdtFireInfo()
 {
+    qDebug() << "pdtFireInfo before verifyData" << (int)g_FireInfo.check_bit << sizeof(g_FireInfo);
+    g_FireInfo.check_bit = verifyData((uchar *)&g_FireInfo, 136);
+    qDebug() << "pdtFireInfo after verifyData" << (int)g_FireInfo.check_bit;
 
+    QByteArray tempArray((char*)&g_FireInfo, 137);
 
+    emit signalSendUdpData(tempArray);
+    g_FireInfo.count++;
+    return QString(tempArray.toHex());
 }
 
 //

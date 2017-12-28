@@ -122,7 +122,11 @@ private:
 
     QGroupBox *groupBoxFireProof;
     QButtonGroup *buttonGroupFireProof;
+    QButtonGroup *buttonGroupFireCamera;
     QPushButton *buttonFireAlarmProbe[NumFirePropes];
+    QCheckBox *checkBoxCameras[NumCameras];
+    QPushButton *buttonFireSimulation;
+    QPushButton *buttonFireResetParam;
 
     QTimer *timerSendTime;
 
@@ -137,6 +141,10 @@ signals:
     
 public slots:
     void about();
+    void slotButtonFireResetParam();
+    void slotButtonFireSimulation();
+    void slotButtonGroupFireCamera(int id);
+    void slotButtonGroupFireProof(int id);
     void slotSendTime();
     void slotStart();
     void slotStop();

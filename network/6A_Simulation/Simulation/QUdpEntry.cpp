@@ -1,4 +1,5 @@
 #include "QUdpEntry.h"
+#include <QDebug>
 
 QUdpEntry::QUdpEntry(QObject *parent) : QObject(parent)
 {
@@ -10,5 +11,6 @@ void QUdpEntry::slotSendUdpData(QByteArray &_datagram)
 {
     QHostAddress addr(m_strIPAddr);
 
+    qDebug() << _datagram.toHex();
     m_udpSocket.writeDatagram(_datagram,addr,m_uIPPort);
 }

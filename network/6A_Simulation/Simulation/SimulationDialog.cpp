@@ -3,6 +3,7 @@
 
 extern void InitUiByLanguage(const QString strLanguage);
 extern STM32Data g_taxData;
+TFireInfo g_FireInfo;
 
 SimulationDialog::SimulationDialog(QWidget *parent) :
     QDialog(parent)
@@ -14,6 +15,7 @@ SimulationDialog::SimulationDialog(QWidget *parent) :
     createDeviceStateGroupBox();
     createImagePreviewGroupBox();
     createSwitchTestGroupBox();
+    createFireResistanceLinkage();
     createStatusBar();
     createTimer();
     setWhatsThis(tr("Simulation Software"));
@@ -40,6 +42,7 @@ SimulationDialog::SimulationDialog(QWidget *parent) :
     QVBoxLayout *publicInfoLayout = new QVBoxLayout;
 
     publicInfoLayout->addWidget(groupBoxPublicInfo);
+    publicInfoLayout->addWidget(groupBoxFireProof);
     publicInfoLayout->addWidget(bigEditor);
     publicInfoLayout->addWidget(buttonBox);
 
@@ -153,15 +156,38 @@ void SimulationDialog::createDeviceStateGroupBox()
 
 void SimulationDialog::createFireResistanceLinkage()
 {
+    memset(&g_FireInfo, 0, sizeof(g_FireInfo));
+    g_FireInfo.sync = 0xAAAA;
+    g_FireInfo.length = 0x89;
+    g_FireInfo.type = 0x55;
+    groupBoxFireProof = new QGroupBox(tr("Fire Resistance Linkage"));
     buttonGroupFireProof = new QButtonGroup();
     QGridLayout *layout = new QGridLayout;
     for (int i = 0; i < NumFirePropes; i++) {
-        buttonFireAlarmProbe[i] = new QPushButton(tr("prope %1").arg(i));
+        buttonFireAlarmProbe[i] = new QPushButton(tr("prope %1").arg(i + 1));
         buttonFireAlarmProbe[i]->setCheckable(true);
         buttonGroupFireProof->addButton(buttonFireAlarmProbe[i], i);
         layout->addWidget(buttonFireAlarmProbe[i], i / 6, i % 6);
     }
+    buttonFireAlarmProbe[0]->setChecked(true);
     buttonGroupFireProof->setExclusive(true);
+    connect(buttonGroupFireProof, SIGNAL(buttonClicked(int)), this, SLOT(slotButtonGroupFireProof(int)));
+//    layout->setSpacing(20);
+    buttonGroupFireCamera = new QButtonGroup();
+    for (int i = 0; i < NumCameras; i++) {
+        checkBoxCameras[i] = new QCheckBox(tr("Camera %1").arg(i + 1));
+        buttonGroupFireCamera->addButton(checkBoxCameras[i], i);
+        layout->addWidget(checkBoxCameras[i], i / 6 + 6, i % 6);
+    }
+    buttonGroupFireCamera->setExclusive(false);
+    buttonFireSimulation = new QPushButton(tr("Simulation"));
+    buttonFireResetParam = new QPushButton(tr("Reset Param"));
+    layout->addWidget(buttonFireSimulation, 8, 4);
+    layout->addWidget(buttonFireResetParam, 8, 5);
+    connect(buttonGroupFireCamera, SIGNAL(buttonClicked(int)), this, SLOT(slotButtonGroupFireCamera(int)));
+    connect(buttonFireSimulation, SIGNAL(clicked()), this, SLOT(slotButtonFireSimulation()));
+    connect(buttonFireResetParam, SIGNAL(clicked()), this, SLOT(slotButtonFireResetParam()));
+    groupBoxFireProof->setLayout(layout);
 }
 
 void SimulationDialog::createImagePreviewGroupBox()
@@ -441,6 +467,67 @@ void SimulationDialog::setPublicInfo()
     }
 }
 
+void SimulationDialog::slotButtonFireResetParam()
+{
+    for (int i = 0; i < NumCameras; i++) {
+        checkBoxCameras[i]->setCheckState(Qt::Unchecked);
+    }
+
+    memset(g_FireInfo.fireProbe, 0, NumFirePropes * 4);
+}
+
+void SimulationDialog::slotButtonFireSimulation()
+{
+    QString display = tr("send data:");
+    display.append(prePublicPctl->pdtFireInfo());
+    bigEditor->setText(display);
+}
+
+void SimulationDialog::slotButtonGroupFireCamera(int id)
+{
+    qDebug() << "slotButtonGroupFireCamera" << id << buttonGroupFireCamera->button(id)->isChecked();
+    int currentProbe = buttonGroupFireProof->checkedId();
+    if (currentProbe >=0 ) {
+        if (checkBoxCameras[id]->checkState() == Qt::Checked) {
+            int cameraId = g_FireInfo.fireProbe[currentProbe].camera[3];
+            if (cameraId) {
+                checkBoxCameras[cameraId - 1]->setCheckState(Qt::Unchecked);
+            }
+            g_FireInfo.fireProbe[currentProbe].camera[3] = g_FireInfo.fireProbe[currentProbe].camera[2];
+            g_FireInfo.fireProbe[currentProbe].camera[2] = g_FireInfo.fireProbe[currentProbe].camera[1];
+            g_FireInfo.fireProbe[currentProbe].camera[1] = g_FireInfo.fireProbe[currentProbe].camera[0];
+            g_FireInfo.fireProbe[currentProbe].camera[0] = id + 1;
+        } else {
+            for (int i = 0; i < 4; i++) {
+                if (id == g_FireInfo.fireProbe[currentProbe].camera[i] - 1) {
+                    g_FireInfo.fireProbe[currentProbe].camera[i] = 0;
+                    break;
+                }
+            }
+            for (int i = 0; i < 3; i++) {
+                int cameraId = g_FireInfo.fireProbe[currentProbe].camera[i];
+                if (!cameraId) {
+                    g_FireInfo.fireProbe[currentProbe].camera[i] = g_FireInfo.fireProbe[currentProbe].camera[i + 1];
+                    g_FireInfo.fireProbe[currentProbe].camera[i + 1] = 0;
+                }
+            }
+        }
+    }
+}
+
+void SimulationDialog::slotButtonGroupFireProof(int id)
+{
+    for (int i = 0; i < NumCameras; i++) {
+        checkBoxCameras[i]->setCheckState(Qt::Unchecked);
+    }
+    for (int i = 0; i < 4; i++) {
+        int cameraId = g_FireInfo.fireProbe[id].camera[i];
+        if (cameraId) {
+            checkBoxCameras[cameraId - 1]->setCheckState(Qt::Checked);
+        }
+    }
+}
+
 void SimulationDialog::slotSendTime()
 {
     setPublicInfo();
@@ -476,5 +563,7 @@ void SimulationDialog::translateUI()
     buttonStop->setText(tr("Stop"));
     qDebug() << "set start";
 }
+
+
 
 
