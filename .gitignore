@@ -8,3 +8,4 @@ foundation/Settings/debug/Makefile
 debug/
 target/
 *.qm
+*user

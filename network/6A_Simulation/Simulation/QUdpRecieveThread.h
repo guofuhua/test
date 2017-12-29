@@ -2,17 +2,15 @@
 #define QUDPRECIEVETHREAD_H
 
 #include <QObject>
-#include <QThread>
 #include <QtNetwork/QtNetwork>
 #define SEND_BUFFER_LENGTH      (9)
 #define RECEIVE_BUFFER_LENGTH   (8)
 
-class QUdpRecieveThread : public QThread
+class QUdpRecieveThread : public QObject
 {
     Q_OBJECT
 public:
-    QUdpRecieveThread();
-    void run();
+    QUdpRecieveThread(QObject *parent = 0);
     int proviseData( const char * _heatData,QByteArray * srcData);
     bool verifyData(unsigned char* _data,int _lgth);
     void PrePtlData(QByteArray tempData);
@@ -23,6 +21,7 @@ private:
     QUdpSocket* m_pudpSocket;
 
 signals:
+    void signalReceiveType(int);
 
 public slots:
     void slotReceiveMessage();

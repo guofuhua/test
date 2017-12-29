@@ -85,388 +85,457 @@
     </message>
 </context>
 <context>
+    <name>QUdpEntry</name>
+    <message>
+        <location filename="QUdpEntry.cpp" line="16"/>
+        <source>send data:</source>
+        <translation></translation>
+    </message>
+</context>
+<context>
     <name>SimulationDialog</name>
     <message>
-        <location filename="SimulationDialog.cpp" line="18"/>
-        <source>This widget takes up all the remaining space in the top-level layout.</source>
+        <location filename="SimulationDialog.cpp" line="31"/>
+        <location filename="SimulationDialog.cpp" line="613"/>
+        <source>Start</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="SimulationDialog.cpp" line="55"/>
+        <location filename="SimulationDialog.cpp" line="33"/>
+        <location filename="SimulationDialog.cpp" line="614"/>
+        <source>Stop</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="SimulationDialog.cpp" line="68"/>
         <source>Simulate 6A communication V1.0</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="SimulationDialog.cpp" line="60"/>
+        <location filename="SimulationDialog.cpp" line="105"/>
         <source>Audio Test</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="SimulationDialog.cpp" line="65"/>
+        <location filename="SimulationDialog.cpp" line="110"/>
         <source>Channel %1 Record</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="SimulationDialog.cpp" line="70"/>
+        <location filename="SimulationDialog.cpp" line="115"/>
         <source>Channel %1 Play</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="SimulationDialog.cpp" line="79"/>
+        <location filename="SimulationDialog.cpp" line="125"/>
         <source>Camera Settings</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="SimulationDialog.cpp" line="84"/>
+        <location filename="SimulationDialog.cpp" line="130"/>
         <source>Camera %1:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="SimulationDialog.cpp" line="92"/>
+        <location filename="SimulationDialog.cpp" line="139"/>
         <source>Device State</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="SimulationDialog.cpp" line="97"/>
+        <location filename="SimulationDialog.cpp" line="144"/>
         <source>AV%1 Board State</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="SimulationDialog.cpp" line="98"/>
-        <location filename="SimulationDialog.cpp" line="104"/>
-        <location filename="SimulationDialog.cpp" line="105"/>
-        <location filename="SimulationDialog.cpp" line="112"/>
+        <location filename="SimulationDialog.cpp" line="145"/>
+        <location filename="SimulationDialog.cpp" line="151"/>
+        <location filename="SimulationDialog.cpp" line="152"/>
+        <location filename="SimulationDialog.cpp" line="159"/>
         <source>NULL</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="SimulationDialog.cpp" line="102"/>
+        <location filename="SimulationDialog.cpp" line="149"/>
         <source>Software Version</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="SimulationDialog.cpp" line="103"/>
+        <location filename="SimulationDialog.cpp" line="150"/>
         <source>Hardware Version</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="SimulationDialog.cpp" line="111"/>
+        <location filename="SimulationDialog.cpp" line="158"/>
         <source>Camera %1 State</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="SimulationDialog.cpp" line="121"/>
-        <source>Image Preview</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="SimulationDialog.cpp" line="128"/>
-        <source>&amp;File</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="SimulationDialog.cpp" line="129"/>
-        <source>E&amp;xit</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="SimulationDialog.cpp" line="133"/>
-        <source>&amp;About</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="SimulationDialog.cpp" line="134"/>
-        <source>Show the application&apos;s About box</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="SimulationDialog.cpp" line="137"/>
-        <source>About &amp;Qt</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="SimulationDialog.cpp" line="138"/>
-        <source>Show the Qt library&apos;s About box</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="SimulationDialog.cpp" line="142"/>
-        <source>Language choice chese</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="SimulationDialog.cpp" line="146"/>
-        <source>Language choice english</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="SimulationDialog.cpp" line="149"/>
-        <source>&amp;Language</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="SimulationDialog.cpp" line="154"/>
-        <source>&amp;Help</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="SimulationDialog.cpp" line="165"/>
-        <source>Type Of Locomotive</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="SimulationDialog.cpp" line="166"/>
-        <source>Train Number</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="SimulationDialog.cpp" line="167"/>
-        <source>The Sender ID</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="SimulationDialog.cpp" line="168"/>
-        <source>Station No</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="SimulationDialog.cpp" line="169"/>
-        <source>Speed</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="SimulationDialog.cpp" line="170"/>
-        <source>Reconnection Information</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="SimulationDialog.cpp" line="171"/>
-        <source>Number Of Vehicles</source>
-        <translation></translation>
-    </message>
-    <message>
         <location filename="SimulationDialog.cpp" line="172"/>
-        <source>Locomotive Working Condition</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="SimulationDialog.cpp" line="173"/>
-        <source>Chauffeur Occupancy</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="SimulationDialog.cpp" line="174"/>
-        <source>Device Status</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="SimulationDialog.cpp" line="175"/>
-        <source>Driver Number</source>
+        <source>Fire Resistance Linkage</source>
         <translation></translation>
     </message>
     <message>
         <location filename="SimulationDialog.cpp" line="176"/>
-        <source>Intersection Number</source>
+        <source>prope %1</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="SimulationDialog.cpp" line="177"/>
-        <source>Kilomete rPost</source>
+        <location filename="SimulationDialog.cpp" line="187"/>
+        <source>Camera %1</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="SimulationDialog.cpp" line="178"/>
-        <source>Length Counting</source>
+        <location filename="SimulationDialog.cpp" line="192"/>
+        <source>Simulation</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="SimulationDialog.cpp" line="179"/>
-        <source>Locomotive Number</source>
+        <location filename="SimulationDialog.cpp" line="193"/>
+        <source>Reset Param</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="SimulationDialog.cpp" line="201"/>
-        <source>HXD2B</source>
+        <location filename="SimulationDialog.cpp" line="204"/>
+        <source>Image Preview</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="SimulationDialog.cpp" line="201"/>
-        <source>TA</source>
+        <location filename="SimulationDialog.cpp" line="205"/>
+        <source>Four Picture</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="SimulationDialog.cpp" line="201"/>
-        <source>DF9</source>
+        <location filename="SimulationDialog.cpp" line="206"/>
+        <source>Eight Picture</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="SimulationDialog.cpp" line="201"/>
-        <source>DF7D</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="SimulationDialog.cpp" line="201"/>
-        <source>SS7D</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="SimulationDialog.cpp" line="201"/>
-        <source>SS3</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="SimulationDialog.cpp" line="201"/>
-        <source>NY7</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="SimulationDialog.cpp" line="201"/>
-        <source>GK1A</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="SimulationDialog.cpp" line="201"/>
-        <source>XSG</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="SimulationDialog.cpp" line="201"/>
-        <source>DF3</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="SimulationDialog.cpp" line="207"/>
-        <location filename="SimulationDialog.cpp" line="213"/>
-        <source>unknown</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="SimulationDialog.cpp" line="207"/>
-        <source>reconnexion</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="SimulationDialog.cpp" line="207"/>
-        <source>non-reconnexion</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="SimulationDialog.cpp" line="210"/>
-        <source>nonzero</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="SimulationDialog.cpp" line="210"/>
-        <source>zero</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="SimulationDialog.cpp" line="210"/>
-        <source>backward</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="SimulationDialog.cpp" line="210"/>
-        <source>forward</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="SimulationDialog.cpp" line="210"/>
-        <source>drag</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="SimulationDialog.cpp" line="210"/>
-        <source>braking</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="SimulationDialog.cpp" line="213"/>
-        <source>one occupation</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="SimulationDialog.cpp" line="213"/>
-        <source>two occupation</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="SimulationDialog.cpp" line="213"/>
-        <source>all occupation</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="SimulationDialog.cpp" line="216"/>
-        <source>monitor</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="SimulationDialog.cpp" line="216"/>
-        <source>degrade</source>
+        <location filename="SimulationDialog.cpp" line="218"/>
+        <source>&amp;File</source>
         <translation></translation>
     </message>
     <message>
         <location filename="SimulationDialog.cpp" line="219"/>
-        <source>shunting</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="SimulationDialog.cpp" line="219"/>
-        <source>non shunting</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="SimulationDialog.cpp" line="222"/>
-        <source>Leading</source>
+        <source>E&amp;xit</source>
         <translation></translation>
     </message>
     <message>
         <location filename="SimulationDialog.cpp" line="223"/>
-        <source>Assisting</source>
+        <source>&amp;About</source>
         <translation></translation>
     </message>
     <message>
         <location filename="SimulationDialog.cpp" line="224"/>
-        <source>Freight</source>
+        <source>Show the application&apos;s About box</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="SimulationDialog.cpp" line="225"/>
-        <source>Passenger</source>
+        <location filename="SimulationDialog.cpp" line="227"/>
+        <source>About &amp;Qt</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="SimulationDialog.cpp" line="279"/>
-        <source>thinkfreely</source>
+        <location filename="SimulationDialog.cpp" line="228"/>
+        <source>Show the Qt library&apos;s About box</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="SimulationDialog.cpp" line="280"/>
-        <source>Ready!</source>
+        <location filename="SimulationDialog.cpp" line="232"/>
+        <source>Language choice chese</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="SimulationDialog.cpp" line="285"/>
-        <source>Switch Test</source>
+        <location filename="SimulationDialog.cpp" line="236"/>
+        <source>Language choice english</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="SimulationDialog.cpp" line="288"/>
-        <source>Switch In Test</source>
+        <location filename="SimulationDialog.cpp" line="239"/>
+        <source>&amp;Language</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="SimulationDialog.cpp" line="289"/>
-        <source>Switch Out Test</source>
+        <location filename="SimulationDialog.cpp" line="244"/>
+        <source>&amp;Help</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="SimulationDialog.cpp" line="255"/>
+        <source>Type Of Locomotive</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="SimulationDialog.cpp" line="256"/>
+        <source>Train Number</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="SimulationDialog.cpp" line="258"/>
+        <source>Station No</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="SimulationDialog.cpp" line="259"/>
+        <source>Speed</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="SimulationDialog.cpp" line="260"/>
+        <source>Reconnection Information</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="SimulationDialog.cpp" line="261"/>
+        <source>Number Of Vehicles</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="SimulationDialog.cpp" line="262"/>
+        <source>Locomotive Working Condition</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="SimulationDialog.cpp" line="263"/>
+        <source>Chauffeur Occupancy</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="SimulationDialog.cpp" line="264"/>
+        <source>Device Status</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="SimulationDialog.cpp" line="265"/>
+        <source>Driver Number</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="SimulationDialog.cpp" line="266"/>
+        <source>Intersection Number</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="SimulationDialog.cpp" line="267"/>
+        <source>Kilomete rPost</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="SimulationDialog.cpp" line="268"/>
+        <source>Length Counting</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="SimulationDialog.cpp" line="269"/>
+        <source>Locomotive Number</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="SimulationDialog.cpp" line="291"/>
+        <source>HXD2B</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="SimulationDialog.cpp" line="291"/>
+        <source>TA</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="SimulationDialog.cpp" line="291"/>
+        <source>DF9</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="SimulationDialog.cpp" line="291"/>
+        <source>DF7D</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="SimulationDialog.cpp" line="291"/>
+        <source>SS7D</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="SimulationDialog.cpp" line="291"/>
+        <source>SS3</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="SimulationDialog.cpp" line="291"/>
+        <source>NY7</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="SimulationDialog.cpp" line="291"/>
+        <source>GK1A</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="SimulationDialog.cpp" line="291"/>
+        <source>XSG</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="SimulationDialog.cpp" line="291"/>
+        <source>DF3</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="SimulationDialog.cpp" line="297"/>
+        <location filename="SimulationDialog.cpp" line="303"/>
+        <source>unknown</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="SimulationDialog.cpp" line="297"/>
+        <source>reconnexion</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="SimulationDialog.cpp" line="297"/>
+        <source>non-reconnexion</source>
         <translation></translation>
     </message>
     <message>
         <location filename="SimulationDialog.cpp" line="300"/>
+        <source>nonzero</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="SimulationDialog.cpp" line="300"/>
+        <source>zero</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="SimulationDialog.cpp" line="300"/>
+        <source>backward</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="SimulationDialog.cpp" line="300"/>
+        <source>forward</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="SimulationDialog.cpp" line="300"/>
+        <source>drag</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="SimulationDialog.cpp" line="300"/>
+        <source>braking</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="SimulationDialog.cpp" line="303"/>
+        <source>one occupation</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="SimulationDialog.cpp" line="303"/>
+        <source>two occupation</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="SimulationDialog.cpp" line="303"/>
+        <source>all occupation</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="SimulationDialog.cpp" line="306"/>
+        <source>monitor</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="SimulationDialog.cpp" line="306"/>
+        <source>degrade</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="SimulationDialog.cpp" line="309"/>
+        <source>shunting</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="SimulationDialog.cpp" line="309"/>
+        <source>non shunting</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="SimulationDialog.cpp" line="312"/>
+        <source>Leading</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="SimulationDialog.cpp" line="313"/>
+        <source>Assisting</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="SimulationDialog.cpp" line="314"/>
+        <source>Freight</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="SimulationDialog.cpp" line="315"/>
+        <source>Passenger</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="SimulationDialog.cpp" line="369"/>
+        <source>thinkfreely</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="SimulationDialog.cpp" line="370"/>
+        <source>Ready!</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="SimulationDialog.cpp" line="375"/>
+        <source>Switch Test</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="SimulationDialog.cpp" line="378"/>
+        <source>Switch In Test</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="SimulationDialog.cpp" line="379"/>
+        <source>Switch Out Test</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="SimulationDialog.cpp" line="553"/>
+        <location filename="SimulationDialog.cpp" line="558"/>
+        <location filename="SimulationDialog.cpp" line="564"/>
+        <source>fault</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="SimulationDialog.cpp" line="555"/>
+        <location filename="SimulationDialog.cpp" line="560"/>
+        <location filename="SimulationDialog.cpp" line="566"/>
+        <source>normal</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="SimulationDialog.cpp" line="84"/>
         <source>About Application</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="SimulationDialog.cpp" line="301"/>
+        <location filename="SimulationDialog.cpp" line="24"/>
+        <source>Simulation Software</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="SimulationDialog.cpp" line="27"/>
+        <source>clicked start send public info, clicked simulation send fire info</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="SimulationDialog.cpp" line="85"/>
         <source>The &lt;b&gt;Application&lt;/b&gt; example demonstrates how to write modern GUI applications using Qt, with a menu bar, toolbars, and a status bar.</source>
         <translation></translation>
     </message>

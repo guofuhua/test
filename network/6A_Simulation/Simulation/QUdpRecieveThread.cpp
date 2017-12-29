@@ -2,7 +2,7 @@
 #include "comment.h"
 TVersionInfo g_tVersionInfo;
 TImageInfo g_tImageInfo;//视频图片报文
-QUdpRecieveThread::QUdpRecieveThread()
+QUdpRecieveThread::QUdpRecieveThread(QObject *parent) : QObject(parent)
 {
 //    QThread* epThread = new QThread(this);
 //    m_pudpSocket = new  QUdpSocket(this);
@@ -13,18 +13,9 @@ QUdpRecieveThread::QUdpRecieveThread()
 //    this->moveToThread(epThread);
 
 //    epThread->start();
-
-}
-
-void QUdpRecieveThread::run()
-{
-   m_pudpSocket = new  QUdpSocket(this);
-   m_pudpSocket->bind(QHostAddress::Any,7000);
-   connect( m_pudpSocket,SIGNAL(readyRead()),this,SLOT(slotReceiveMessage()),Qt::DirectConnection);
-
-
-  exec();
-  qDebug()<<"over";
+    m_pudpSocket = new  QUdpSocket(this);
+    m_pudpSocket->bind(QHostAddress::Any,7000);
+    connect( m_pudpSocket,SIGNAL(readyRead()),this,SLOT(slotReceiveMessage()));
 }
 
 void QUdpRecieveThread::slotReceiveMessage()
@@ -39,7 +30,7 @@ void QUdpRecieveThread::slotReceiveMessage()
        QHostAddress sender;
        quint16 senderPort;
         m_pudpSocket->readDatagram(datagram.data(), datagram.size(), &sender, &senderPort);
-       qDebug()<<datagram.size(); //processTheDatagram(datagram);<<sender.toString()<<senderPort
+       qDebug() << "slotReceiveMessage" <<datagram.size(); //processTheDatagram(datagram);<<sender.toString()<<senderPort
       QString strDate =( datagram.right(datagram.size()).toHex());
 
       qDebug()<<"date::"<<strDate;
@@ -52,8 +43,7 @@ void QUdpRecieveThread::slotReceiveMessage()
 
 void QUdpRecieveThread::PrePtlData(QByteArray tempData)
 {
-
-
+    qDebug() << "PrePtlData" << tempData.toHex();
     while(RECEIVE_BUFFER_LENGTH <= tempData.length())
     {
         //解析 指定 协议 版本报文-视频监控板卡 (17)  ;视频图片报文
@@ -78,18 +68,19 @@ int QUdpRecieveThread::proviseData( const char * _heatData,QByteArray * srcData)
     for(int i = 0 ;srcData->length() >= (i+4) ;i++)
     {
         iLength = srcData->at(i+2) +srcData->at(i+3)*256;
-
+//        qDebug("src %x, %x, %x", srcData->at(i), srcData->at(i+1), srcData->at(i+4));
         if(((char) _heatData[0]==srcData->at(i) )&&((char) _heatData[1]==srcData->at(i+1) ))
         {
+//            qDebug() << "src " << (uint)srcData->at(i) << (uint)srcData->at(i+1);
             if(verifyData((unsigned char*)srcData->mid(i,iLength).data(),iLength))
             {
-                switch(srcData->at(i+4))
+                uchar type =srcData->at(i+4) ;
+                switch(type)
                 {
                     case 0x01:   //版本报文
                     {
                        dealVersionData((srcData->mid(i,iLength+i)));
                         srcData->remove(0,i+iLength);
-                        return i;
                     }
                     break;
                     case 0x51://视频图片报文
@@ -97,7 +88,6 @@ int QUdpRecieveThread::proviseData( const char * _heatData,QByteArray * srcData)
 
                         dealImageData((srcData->mid(i,iLength+i)));
                         srcData->remove(0,i+iLength);
-                        return i;
                     }
                     break;
 //                    case 0xFE:
@@ -107,6 +97,8 @@ int QUdpRecieveThread::proviseData( const char * _heatData,QByteArray * srcData)
 //                    }
 //                    break;
                 }
+                emit signalReceiveType(type);
+                return i;
             }
             //qDebug()<<"xxxxxxxx=========="<< i;
 
@@ -123,7 +115,7 @@ void QUdpRecieveThread::dealVersionData(QByteArray _bAryTempData)
 {
 
 
-    QString strDate =( _bAryTempData.right(_bAryTempData.size()).toHex()) + "\n";
+    QString strDate =( _bAryTempData.right(_bAryTempData.size()).toHex());
 
     qDebug()<<"version date::"<<strDate;
     int  iLength = _bAryTempData.at(2) +_bAryTempData.at(3)*256;
@@ -133,7 +125,7 @@ void QUdpRecieveThread::dealVersionData(QByteArray _bAryTempData)
         uchar Version = _bAryTempData.at(6);
         g_tVersionInfo.m_uHardwaveVersion = (Version>>4)&0x0f;
         g_tVersionInfo.m_uSoftwaveVersion = (Version&0x0f);
-        qDebug()<< g_tVersionInfo.m_uHardwaveVersion<<g_tVersionInfo.m_uSoftwaveVersion;
+        qDebug() << "dealVersionData" << g_tVersionInfo.m_uHardwaveVersion<<g_tVersionInfo.m_uSoftwaveVersion;
     }
 
 
@@ -178,12 +170,18 @@ void QUdpRecieveThread::dealImageData(QByteArray _bAryTempData)
 bool QUdpRecieveThread::verifyData(unsigned char* _data,int _lgth)
 {
     unsigned char _num = 0;
+//    if ((uint)_lgth < 1025) {
+//        QByteArray test((char *)_data, _lgth);
+//        qDebug() << "verifyData" << test.toHex();
+//    } else {
+//        qDebug() << "verifyData" << "length" << _lgth;
+//    }
 
     for(int i = 0; i < _lgth-1; i++) _num += _data[i];
 
     if(_data[_lgth-1] != _num)
     {
-       // printf("STM32数据校验错误\n");
+        qDebug("STM32 data check failed!");
         return false;
     }
     return true;

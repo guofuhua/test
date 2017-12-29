@@ -3,7 +3,10 @@
 
 extern void InitUiByLanguage(const QString strLanguage);
 extern STM32Data g_taxData;
+extern TVersionInfo g_tVersionInfo;
+extern TImageInfo g_tImageInfo;//ÊÓÆµÍ¼Æ¬±¨ÎÄ
 TFireInfo g_FireInfo;
+QString bigEditDisplay;
 
 SimulationDialog::SimulationDialog(QWidget *parent) :
     QDialog(parent)
@@ -21,8 +24,7 @@ SimulationDialog::SimulationDialog(QWidget *parent) :
     setWhatsThis(tr("Simulation Software"));
 
     bigEditor = new QTextEdit;
-    bigEditor->setPlainText(tr("This widget takes up all the remaining space "
-                               "in the top-level layout."));
+    bigEditor->setPlainText(tr("clicked start send public info, clicked simulation send fire info"));
 
     buttonBox = new QDialogButtonBox();
 
@@ -69,7 +71,13 @@ SimulationDialog::SimulationDialog(QWidget *parent) :
     prePublicPctl = QPrePublicPctl::getInstance();
     udpEntry = QUdpEntry::getInstance();
     udpReceiveThread = new QUdpRecieveThread();
+    QSettings _settings("./user.ini", QSettings::IniFormat);
+    udpEntry->m_strIPAddr = _settings.value("AV3/IP", "192.168.1.58").toString();
+    udpEntry->m_uIPPort = _settings.value("AV3/port", 7000).toInt();
+    connect(udpEntry, SIGNAL(signalSendData(QString)), bigEditor, SLOT(setText(QString)));
     connect(prePublicPctl, SIGNAL(signalSendUdpData(QByteArray&)), udpEntry, SLOT(slotSendUdpData(QByteArray&)));
+    connect(udpReceiveThread, SIGNAL(signalReceiveType(int)), this, SLOT(slotReceiveStatus(int)));
+//    udpReceiveThread->start();
 }
 
 void SimulationDialog::about()
@@ -110,6 +118,7 @@ void SimulationDialog::createAudioTestGroupBox()
         layout->addWidget(buttonPlaySound[i], 1, i);
     }
     audioTestGroupBox->setLayout(layout);
+    audioTestGroupBox->setEnabled(false);
 }
 
 void SimulationDialog::createCameraSettingGroupBox()
@@ -123,6 +132,7 @@ void SimulationDialog::createCameraSettingGroupBox()
         layout->addWidget(labelCameraSetting[i], (i / 3), (i % 3));
     }
     cameraSettingGroupBox->setLayout(layout);
+    cameraSettingGroupBox->setEnabled(false);
 }
 
 void SimulationDialog::createDeviceStateGroupBox()
@@ -199,6 +209,7 @@ void SimulationDialog::createImagePreviewGroupBox()
     hbox->addWidget(radioFourPicture);
     hbox->addWidget(radioEightPicture);
     imagePreviewGroupBox->setLayout(hbox);
+    imagePreviewGroupBox->setEnabled(false);
 }
 
 void SimulationDialog::createMenu()
@@ -373,6 +384,7 @@ void SimulationDialog::createSwitchTestGroupBox()
     layout->addWidget(buttonSwitchInTest);
 
     switchTestGroupBox->setLayout(layout);
+    switchTestGroupBox->setEnabled(false);
 }
 
 void SimulationDialog::createTimer()
@@ -478,9 +490,10 @@ void SimulationDialog::slotButtonFireResetParam()
 
 void SimulationDialog::slotButtonFireSimulation()
 {
-    QString display = tr("send data:");
-    display.append(prePublicPctl->pdtFireInfo());
-    bigEditor->setText(display);
+    prePublicPctl->pdtFireInfo();
+//    QString display = tr("send data:");
+//    display.append(prePublicPctl->pdtFireInfo());
+//    bigEditor->setText(display);
 }
 
 void SimulationDialog::slotButtonGroupFireCamera(int id)
@@ -528,15 +541,53 @@ void SimulationDialog::slotButtonGroupFireProof(int id)
     }
 }
 
+void SimulationDialog::slotReceiveStatus(int type)
+{
+    qDebug() << "slotReceiveStatus" << type;
+    switch (type)
+    {
+    case 1:
+        labelSoftwareVersionValue->setText(QString("%1").arg((int)g_tVersionInfo.m_uSoftwaveVersion));
+        labelHardwareVersionValue->setText(QString("%1").arg((int)g_tVersionInfo.m_uHardwaveVersion));
+        break;
+    case 5:
+        if (g_tImageInfo.m_bCard1Fault) {
+            labelAVBoardsStateValue[0]->setText(tr("fault"));
+        } else {
+            labelAVBoardsStateValue[0]->setText(tr("normal"));
+        }
+        if (g_tImageInfo.m_bCard2Fault) {
+            labelAVBoardsStateValue[1]->setText(tr("fault"));
+        } else {
+            labelAVBoardsStateValue[1]->setText(tr("normal"));
+        }
+        for (int i = 0; i < NumCameras; i++) {
+            if (g_tImageInfo.m_uVideoCheck & (0x1 << i)) {
+                labelCamerasStateValue[i]->setText(tr("fault"));
+            } else {
+                labelCamerasStateValue[i]->setText(tr("normal"));
+            }
+        }
+        break;
+    }
+}
+
 void SimulationDialog::slotSendTime()
 {
     setPublicInfo();
-    prePublicPctl->pdtTimePlt();
+    if (0 == sendTimes % 60) {
+        prePublicPctl->pdtTimePlt();
+    }
+    prePublicPctl->pdtPublicPtl();
+    prePublicPctl->pdtTrainNumberPlt();
+    sendTimes++;
 }
 
 void SimulationDialog::slotStart()
 {
+    sendTimes = 0;
     timerSendTime->start();
+    slotSendTime();
 }
 
 void SimulationDialog::slotStop()
@@ -545,6 +596,8 @@ void SimulationDialog::slotStop()
         buttonStart->setChecked(false);
     }
     timerSendTime->stop();
+    bigEditDisplay.clear();
+    bigEditor->clear();
 }
 
 void SimulationDialog::translateChese()

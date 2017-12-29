@@ -17,7 +17,6 @@ int main(int argc, char *argv[])
     m_translator = new QTranslator();   //QTranslator 必须是全局的，不然会恢复默认值。
     InitUiByLanguage("chese");
     qApp->installTranslator(m_translator);
-
 //    MainWindow w;
 //    w.show();
 

@@ -20,6 +20,7 @@ public:
     QString m_strIPAddr;
     quint16 m_uIPPort;
 signals:
+    void signalSendData(QString);
 
 public slots:
     void slotSendUdpData(QByteArray &_datagram);

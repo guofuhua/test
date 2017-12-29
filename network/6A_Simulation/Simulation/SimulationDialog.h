@@ -133,6 +133,7 @@ private:
     QPrePublicPctl *prePublicPctl;
     QUdpEntry *udpEntry;
     QUdpRecieveThread *udpReceiveThread;
+    int sendTimes;
 
     QMenu *fileMenu;
     QAction *exitAction;
@@ -145,6 +146,7 @@ public slots:
     void slotButtonFireSimulation();
     void slotButtonGroupFireCamera(int id);
     void slotButtonGroupFireProof(int id);
+    void slotReceiveStatus(int type);
     void slotSendTime();
     void slotStart();
     void slotStop();
