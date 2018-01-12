@@ -4,8 +4,8 @@
 #include <QDialog>
 #include <QtGui>
 #include "QPrePublicPctl.h"
-#include "QUdpEntry.h"
 #include "QUdpRecieveThread.h"
+#include "comment.h"
 
 QT_BEGIN_NAMESPACE
 class QAction;
@@ -39,8 +39,6 @@ private:
     void createTimer();
     void setPublicInfo();
     void translateUI();
-
-    enum { NumGridRows = 3, NumAVBoards = 3, NumButtons = 4, NumAudioCannels = 4, NumCameras = 14, NumFirePropes = 32 };
 
     QMenuBar *menuBar;
     QMenu *languageMenu;
@@ -77,38 +75,38 @@ private:
     QLabel *labelCompany;
     QLabel *labelStatus;
 
-    QLabel *labelDataKilometerPost; //¹«Àï±ê
+    QLabel *labelDataKilometerPost; //å…¬é‡Œæ ‡
     QLineEdit *lineEditDataKilometerPost;
-    QLabel *labelDataSpeed; //ËÙ¶È
+    QLabel *labelDataSpeed; //é€Ÿåº¦
     QLineEdit *lineEditDataSpeed;
-    QLabel *labelDataLengthCounting;  //¼Æ³¤
+    QLabel *labelDataLengthCounting;  //è®¡é•¿
     QLineEdit *lineEditDataLengthCounting ;
-    QLabel *labelDataNumberOfVehicles;  //Á¾Êı
+    QLabel *labelDataNumberOfVehicles;  //è¾†æ•°
     QLineEdit *lineEditDataNumberOfVehicles;
-    QLabel *labelDataStationNo; //³µÕ¾ºÅ
+    QLabel *labelDataStationNo; //è½¦ç«™å·
     QLineEdit *lineEditDataStationNo;
-    QLabel *labelDataDriverNumber;  //Ë¾»úºÅ
+    QLabel *labelDataDriverNumber;  //å¸æœºå·
     QLineEdit *lineEditDataDriverNumber;
-    QLabel *labelDataTrainNumber;   //³µ´Î
+    QLabel *labelDataTrainNumber;   //è½¦æ¬¡
     QLineEdit *lineEditDataTrainNumber1;
     QLineEdit *lineEditDataTrainNumber2;
-    QLabel *labelDataIntersectionNumber;    //½»Â·ºÅ
+    QLabel *labelDataIntersectionNumber;    //äº¤è·¯å·
     QLineEdit *lineEditDataIntersectionNumber;
-    QLabel *labelDataLocomotiveNumber;  //»ú³µºÅ
+    QLabel *labelDataLocomotiveNumber;  //æœºè½¦å·
     QLineEdit *lineEditDataLocomotiveNumber;
-    QLabel *labelDataChauffeurOccupancy;    //Ë¾»úÊÒÕ¼ÓÃ
+    QLabel *labelDataChauffeurOccupancy;    //å¸æœºå®¤å ç”¨
     QComboBox *comboBoxDataChauffeurOccupancy;
-    QLabel *labelDataReconnectionInformation;    //ÖØÁªĞÅÏ¢
+    QLabel *labelDataReconnectionInformation;    //é‡è”ä¿¡æ¯
     QComboBox *comboBoxDataReconnectionInformation;
-    QLabel *labelDataDeviceStatus;    //×°ÖÃ×´Ì¬
+    QLabel *labelDataDeviceStatus;    //è£…ç½®çŠ¶æ€
     QComboBox *comboBoxDataDeviceStatus;
-    QLabel *labelDataLocomotiveWorkingCondition;    //»ú³µ¹¤¿ö
+    QLabel *labelDataLocomotiveWorkingCondition;    //æœºè½¦å·¥å†µ
     QComboBox *comboBoxDataLocomotiveWorkingCondition;
-//    QLabel *labelDataTheSenderID;    //·¢ËÍ·½ID
+//    QLabel *labelDataTheSenderID;    //å‘é€æ–¹ID
 //    QComboBox *comboBoxDataTheSenderID;
-    QLabel *labelDataTypeOfLocomotive;    //»ú³µÀàĞÍ
+    QLabel *labelDataTypeOfLocomotive;    //æœºè½¦ç±»å‹
     QComboBox *comboBoxDataTypeOfLocomotive;
-    QComboBox *comboBoxDataShunting;    //µ÷³µ¡¢·Çµ÷³µ
+    QComboBox *comboBoxDataShunting;    //è°ƒè½¦ã€éè°ƒè½¦
     QRadioButton *radioDataBen;
     QRadioButton *radioDataBu;
     QRadioButton *radioDataKe;
@@ -126,14 +124,15 @@ private:
     QPushButton *buttonFireAlarmProbe[NumFirePropes];
     QCheckBox *checkBoxCameras[NumCameras];
     QPushButton *buttonFireSimulation;
+    QPushButton *buttonFireLink;
     QPushButton *buttonFireResetParam;
 
     QTimer *timerSendTime;
 
     QPrePublicPctl *prePublicPctl;
-    QUdpEntry *udpEntry;
     QUdpRecieveThread *udpReceiveThread;
     int sendTimes;
+    bool isFireAlarmDataValid;
 
     QMenu *fileMenu;
     QAction *exitAction;
@@ -142,6 +141,7 @@ signals:
     
 public slots:
     void about();
+    void slotButtonFireLink();
     void slotButtonFireResetParam();
     void slotButtonFireSimulation();
     void slotButtonGroupFireCamera(int id);

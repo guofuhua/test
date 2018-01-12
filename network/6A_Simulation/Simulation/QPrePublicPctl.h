@@ -35,7 +35,9 @@ public:
       {
           static QPrePublicPctl instance;
           return &instance;
-      }
+    }
+    QString pdtEthernetCharacterVersionMessage();
+    QString pdtFireAlarmInfo();
 private:
     explicit QPrePublicPctl(QObject *parent = 0);
 signals:

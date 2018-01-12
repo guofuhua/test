@@ -177,18 +177,45 @@ typedef struct TImageInfo
 
 struct TFireCamera
 {
-    uchar camera[4];
+    uchar camera[4];    //探头关联的 4 个视频通道（每个字节取值 0-16，0 表示未关联）
 };
 
-//视频图片报文
+//视频防火联动报文
 typedef struct TFireInfo
 {
-    quint16 sync;//硬盘故障
-    quint16 length;//采集卡1故障
-    uchar type;//采集卡2故障
-    uchar count;//摄像头自检 -16通道 每位一通道
-    quint16 none;//图像通道
-    struct TFireCamera fireProbe[32];//图像格式
-    char check_bit;//图像数据 数据
+    quint16 sync;//AA AA
+    quint16 length;//报文长度: 0x89
+    uchar type;//报文类型：0x55
+    uchar count;//循环计数：0-255
+    quint16 none;//预留
+    struct TFireCamera fireProbe[32];//探头关联信息
+    char check_bit;//不含自身的累加和校验（即从帧头开始至数据结束）。
 }TFireInfo;
+
+//以太网字符版本报文
+typedef struct TEthernetCharacterVersionMessage
+{
+    quint16 sync;//AA AA
+    quint16 length;//报文长度: 0x0F
+    uchar type;//报文类型：0x05
+    uchar count;//节点代码
+    char version[8];//8 字节字符型版本信息，不足 8 字节在高位补空格（例如 V2.01，[V][2][.][0][1][空格][空格][空格]）
+    char check_bit;//不含自身的累加和校验（即从帧头开始至数据结束）。
+}TEthernetCharacterVersionMessage;
+
+enum { NumGridRows = 3, NumAVBoards = 3, NumButtons = 4, NumAudioCannels = 4, NumCameras = 14, NumFirePropes = 32 };
+
+//防火监控报文
+typedef struct
+{
+    quint16 sync;//AA AA
+    quint16 length;//报文长度: 0x28
+    uchar type;//报文类型：0x22
+    uchar none;//预留
+    uchar busState;//总线状态
+    char probeStatus[NumFirePropes];//bit:0~2探头类型,bit:3~5探头状态,bit:7~8预留防区报警
+    char check_bit;//不含自身的累加和校验（即从帧头开始至数据结束）。
+}__attribute__((packed)) TFireproofMonitoringMessage;
+
+
 #endif // COMMENT_H

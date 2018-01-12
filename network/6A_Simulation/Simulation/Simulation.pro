@@ -18,12 +18,12 @@ SOURCES += main.cpp\
         mainwindow.cpp \
     SimulationDialog.cpp \
     QUdpRecieveThread.cpp \
-    QUdpEntry.cpp \
-    QPrePublicPctl.cpp
+    QPrePublicPctl.cpp \
+    FireAlarmDialog.cpp
 
 HEADERS  += mainwindow.h \
     SimulationDialog.h \
     QUdpRecieveThread.h \
-    QUdpEntry.h \
     QPrePublicPctl.h \
-    comment.h
+    comment.h \
+    FireAlarmDialog.h

@@ -16,15 +16,19 @@ public:
     void PrePtlData(QByteArray tempData);
     void dealVersionData(QByteArray bAryTempData);
     void dealImageData(QByteArray bAryTempData);
-public:
+    QString m_strIPAddr;
+    quint16 m_uIPPort;
+
 private:
     QUdpSocket* m_pudpSocket;
 
 signals:
     void signalReceiveType(int);
+    void signalSendData(QString);
 
 public slots:
     void slotReceiveMessage();
+    void slotSendUdpData(QByteArray &_datagram);
 };
 
 #endif // QUDPRECIEVETHREAD_H

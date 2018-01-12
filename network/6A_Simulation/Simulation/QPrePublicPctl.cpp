@@ -8,6 +8,8 @@
 
 STM32Data g_taxData;
 extern TFireInfo g_FireInfo;
+extern TEthernetCharacterVersionMessage g_EthernetCharacterVersionMessage;
+extern TFireproofMonitoringMessage g_FireproofMonitorInfo;
 uchar verifyData(unsigned char* _data,int _lgth);
 QPrePublicPctl::QPrePublicPctl(QObject *parent) : QObject(parent)
 {
@@ -288,6 +290,43 @@ QString QPrePublicPctl::pdtFireInfo()
     g_FireInfo.count++;
     return QString(tempArray.toHex());
 }
+
+QString QPrePublicPctl::pdtFireAlarmInfo()
+{
+//    qDebug() << "pdtFireAlarmInfo before verifyData" << (int)g_FireproofMonitorInfo.check_bit << sizeof(g_FireproofMonitorInfo);
+    g_FireproofMonitorInfo.check_bit = verifyData((uchar *)&g_FireproofMonitorInfo, 39);
+//    qDebug() << "pdtFireAlarmInfo after verifyData" << (int)g_FireproofMonitorInfo.check_bit;
+
+    QByteArray tempArray((char*)&g_FireproofMonitorInfo, 40);
+
+    emit signalSendUdpData(tempArray);
+    return QString(tempArray.toHex());
+}
+
+QString QPrePublicPctl::pdtEthernetCharacterVersionMessage()
+{
+    g_EthernetCharacterVersionMessage.sync = 0xAAAA;
+    g_EthernetCharacterVersionMessage.length = 0xF;
+    g_EthernetCharacterVersionMessage.type = 0x05;
+    g_EthernetCharacterVersionMessage.count = 0;
+    g_EthernetCharacterVersionMessage.version[0] = 'V';
+    g_EthernetCharacterVersionMessage.version[1] = '2';
+    g_EthernetCharacterVersionMessage.version[2] = '.';
+    g_EthernetCharacterVersionMessage.version[3] = '0';
+    g_EthernetCharacterVersionMessage.version[4] = '1';
+    g_EthernetCharacterVersionMessage.version[5] = ' ';
+    g_EthernetCharacterVersionMessage.version[6] = ' ';
+    g_EthernetCharacterVersionMessage.version[7] = ' ';
+    qDebug() << "pdtEthernetCharacterVersionMessage before verifyData" << (int)g_FireInfo.check_bit << sizeof(g_FireInfo);
+    g_EthernetCharacterVersionMessage.check_bit = verifyData((uchar *)&g_EthernetCharacterVersionMessage, 14);
+    qDebug() << "pdtEthernetCharacterVersionMessage after verifyData" << (int)g_EthernetCharacterVersionMessage.check_bit;
+
+    QByteArray tempArray((char*)&g_EthernetCharacterVersionMessage, 15);
+
+    emit signalSendUdpData(tempArray);
+    return QString(tempArray.toHex());
+}
+
 
 //
 //FUCTION: 校验指定长度的数据
