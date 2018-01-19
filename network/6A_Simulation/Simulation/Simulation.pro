@@ -27,3 +27,7 @@ HEADERS  += mainwindow.h \
     QPrePublicPctl.h \
     comment.h \
     FireAlarmDialog.h
+
+#INCLUDEPATH += D:\VC++\pvc6\VC98\MFC\INCLUDE
+#QMAKE_RPATHDIR += D:\VC++\pvc6\VC98\MFC\LIB
+#LIBS += D:\guofh\GitHub\test\network\6A_Simulation\Simulation\WinVideoPreview.lib

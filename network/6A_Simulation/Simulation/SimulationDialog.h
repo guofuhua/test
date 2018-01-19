@@ -117,6 +117,7 @@ private:
     QRadioButton *radioEightPicture;
     QPushButton *buttonStart;
     QPushButton *buttonStop;
+    QPushButton *buttonClear;
 
     QGroupBox *groupBoxFireProof;
     QButtonGroup *buttonGroupFireProof;
@@ -126,6 +127,7 @@ private:
     QPushButton *buttonFireSimulation;
     QPushButton *buttonFireLink;
     QPushButton *buttonFireResetParam;
+    QPushButton *buttonImageView;
 
     QTimer *timerSendTime;
 
@@ -133,6 +135,9 @@ private:
     QUdpRecieveThread *udpReceiveThread;
     int sendTimes;
     bool isFireAlarmDataValid;
+    bool isSendPublicInfo;
+    bool isSendTime;
+    bool isSendFire;
 
     QMenu *fileMenu;
     QAction *exitAction;
@@ -146,6 +151,8 @@ public slots:
     void slotButtonFireSimulation();
     void slotButtonGroupFireCamera(int id);
     void slotButtonGroupFireProof(int id);
+    void slotClear();
+    void slotImagePreview();
     void slotReceiveStatus(int type);
     void slotSendTime();
     void slotStart();

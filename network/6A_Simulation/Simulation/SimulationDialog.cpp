@@ -1,6 +1,7 @@
 #include "SimulationDialog.h"
 #include "comment.h"
 #include "FireAlarmDialog.h"
+//#include "QVideoMonitor.h"
 
 extern void InitUiByLanguage(const QString strLanguage);
 extern STM32Data g_taxData;
@@ -31,11 +32,13 @@ SimulationDialog::SimulationDialog(QWidget *parent) :
 
     buttonBox = new QDialogButtonBox();
 
+    buttonClear = buttonBox->addButton(tr("Clear"), QDialogButtonBox::ActionRole);
     buttonStart = buttonBox->addButton(tr("Start"), QDialogButtonBox::ActionRole);
     buttonStart->setCheckable(true);
     buttonStop = buttonBox->addButton(tr("Stop"), QDialogButtonBox::ActionRole);
     connect(buttonStart, SIGNAL(clicked()), this, SLOT(slotStart()));
     connect(buttonStop, SIGNAL(clicked()), this, SLOT(slotStop()));
+    connect(buttonClear, SIGNAL(clicked()), this, SLOT(slotClear()));
 
     QVBoxLayout *statusLayout = new QVBoxLayout;
     statusLayout->addWidget(deviceStateGroupBox);
@@ -80,15 +83,34 @@ SimulationDialog::SimulationDialog(QWidget *parent) :
     connect(udpReceiveThread, SIGNAL(signalReceiveType(int)), this, SLOT(slotReceiveStatus(int)));
 //    udpReceiveThread->start();
     isFireAlarmDataValid = false;
+    if (_settings.contains("Simulation/FireAlarm")) {
+        isFireAlarmDataValid = true;
+        g_FireproofMonitorInfo.sync = 0xAAAA;
+        g_FireproofMonitorInfo.length = 0x28;
+        g_FireproofMonitorInfo.type = 0x22;
+        g_FireproofMonitorInfo.busState = 0x01;
+    }
     QByteArray tempArray;
     tempArray = QByteArray::fromHex(_settings.value("Simulation/FireLink").toByteArray());
     if (NumFirePropes * 4 == tempArray.size()) {
         memcpy(g_FireInfo.fireProbe, tempArray.data(), tempArray.size());
     }
     tempArray = QByteArray::fromHex(_settings.value("Simulation/FireAlarm").toByteArray());
-    if (32 == tempArray.size()) {
-        memcpy(g_FireproofMonitorInfo.probeStatus, tempArray.data(), tempArray.size());
+    if (33 == tempArray.size()) {
+        memcpy(&g_FireproofMonitorInfo.busState, tempArray.data(), tempArray.size());
     }
+    if (!_settings.contains("Simulation/SendPublic")) {
+        _settings.setValue("Simulation/SendPublic", false);
+    }
+    if (!_settings.contains("Simulation/SendTime")) {
+        _settings.setValue("Simulation/SendTime", false);
+    }
+    if (!_settings.contains("Simulation/SendFire")) {
+        _settings.setValue("Simulation/SendFire", true);
+    }
+    isSendPublicInfo = _settings.value("Simulation/SendPublic", false).toBool();
+    isSendTime = _settings.value("Simulation/SendTime", false).toBool();
+    isSendFire = _settings.value("Simulation/SendFire", true).toBool();
     translateUI();
 }
 
@@ -220,11 +242,14 @@ void SimulationDialog::createImagePreviewGroupBox()
     imagePreviewGroupBox = new QGroupBox(tr("Image Preview"));
     radioFourPicture    = new QRadioButton(tr("Four Picture"));
     radioEightPicture   = new QRadioButton(tr("Eight Picture"));
+    buttonImageView     = new QPushButton(tr("Image Previews"));
     QHBoxLayout *hbox   = new QHBoxLayout;
     hbox->addWidget(radioFourPicture);
     hbox->addWidget(radioEightPicture);
+    hbox->addWidget(buttonImageView);
+    connect(buttonImageView, SIGNAL(clicked()), this, SLOT(slotImagePreview()));
     imagePreviewGroupBox->setLayout(hbox);
-    imagePreviewGroupBox->setEnabled(false);
+//    imagePreviewGroupBox->setEnabled(false);
 }
 
 void SimulationDialog::createMenu()
@@ -522,8 +547,10 @@ void SimulationDialog::slotButtonFireSimulation()
         isFireAlarmDataValid = true;
         QSettings _settings("./user.ini", QSettings::IniFormat);
         QByteArray tempArray(g_FireproofMonitorInfo.probeStatus, 32);
+        tempArray.insert(0, g_FireproofMonitorInfo.busState);
         _settings.setValue("Simulation/FireAlarm", tempArray.toHex());
     }
+//    prePublicPctl->pdtFireAlarmInfo();
 //    QString display = tr("send data:");
 //    display.append(prePublicPctl->pdtFireInfo());
 //    bigEditor->setText(display);
@@ -581,6 +608,21 @@ void SimulationDialog::slotButtonGroupFireProof(int id)
     }
 }
 
+void SimulationDialog::slotClear()
+{
+    bigEditDisplay.clear();
+    bigEditor->clear();
+}
+
+void SimulationDialog::slotImagePreview()
+{
+//    QVideoMonitor dialog;
+//    qDebug() << dialog.exec();
+//    if (QDialog::Accepted == dialog.exec()) {
+//        qDebug() << "fire alarm changed";
+//    }
+}
+
 void SimulationDialog::slotReceiveStatus(int type)
 {
     qDebug() << "slotReceiveStatus" << type;
@@ -614,18 +656,22 @@ void SimulationDialog::slotReceiveStatus(int type)
 
 void SimulationDialog::slotSendTime()
 {
-//    setPublicInfo();
+    if (isSendPublicInfo) {
+        setPublicInfo();
+    }
     bool isAlarm = false;
 
     if (0 == sendTimes++ % 10) {
         if (0 == sendTimes % 60) {
-//            prePublicPctl->pdtTimePlt();
+            if (isSendTime) {
+                prePublicPctl->pdtTimePlt();
+            }
         }
 //        prePublicPctl->pdtEthernetCharacterVersionMessage();
-        if (isFireAlarmDataValid) {
+        if (isFireAlarmDataValid && isSendFire) {
             prePublicPctl->pdtFireAlarmInfo();
         }
-    } else if (isFireAlarmDataValid) {
+    } else if (isFireAlarmDataValid && isSendFire) {
         for (int i = 0; i < NumFirePropes; i++) {
             if (0x20 == (g_FireproofMonitorInfo.probeStatus[i] & 0x38)) {
                 isAlarm = true;
@@ -636,8 +682,10 @@ void SimulationDialog::slotSendTime()
             prePublicPctl->pdtFireAlarmInfo();
         }
     }
-//    prePublicPctl->pdtPublicPtl();
-//    prePublicPctl->pdtTrainNumberPlt();
+    if (isSendPublicInfo) {
+        prePublicPctl->pdtPublicPtl();
+        prePublicPctl->pdtTrainNumberPlt();
+    }
 }
 
 void SimulationDialog::slotStart()
@@ -658,8 +706,6 @@ void SimulationDialog::slotStop()
         buttonStart->setChecked(false);
     }
     timerSendTime->stop();
-    bigEditDisplay.clear();
-    bigEditor->clear();
 }
 
 void SimulationDialog::translateChese()
