@@ -140,7 +140,7 @@ void Bin2Text(const char* sIn,const char* sOut){
     fclose(fout);
 }
 
-int main(int argc, char* argv[]){
+int ConvertMain(int argc, char* argv[]){
     int i;
     char name[1024];
     if (argc < 3)
