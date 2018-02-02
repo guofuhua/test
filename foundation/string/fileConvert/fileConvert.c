@@ -6,7 +6,7 @@ void print_2(int val2);
 void Text2Bin(const char* sIn,const char* sOut){
     char a[255];
     unsigned char ch = 0;
-    size_t i = 0;
+    int i = 0;
     unsigned char write_buf[255];
     size_t read_count = 0;
     size_t write_count = 0;
@@ -24,7 +24,13 @@ void Text2Bin(const char* sIn,const char* sOut){
             switch(a[i])
             {
             case ' ':
-                odd = 2;
+                odd = 0;
+                write_buf[0] = ch;
+                ch = 0;
+                write_count = fwrite(write_buf, 1, 1, fout);
+                if (1 != write_count) {
+                    printf("write_count=%d\n", write_count);
+                }
                 break;
             case '0':
             case '1':
@@ -118,7 +124,7 @@ void Bin2Text(const char* sIn,const char* sOut){
 
     size_t read_count = 0;
     size_t write_count = 0;
-    size_t i = 0;
+    int i = 0;
     char cRead[4];
     char cChar[16] = {'0', '1', '2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
     while(!feof(fin))
@@ -146,7 +152,7 @@ int main(int argc, char* argv[]){
     if (argc < 3)
     {
         printf("Usage:./a.out bin data.bin , bin file to txt file.\n");
-        printf("Usage:./a.out txt data.txt , txt file to bin file.\n");
+	printf("Usage:./a.out txt data.txt , txt file to bin file.\n");
         return 0;
     }
     for(i = 0; i<argc; i++)
