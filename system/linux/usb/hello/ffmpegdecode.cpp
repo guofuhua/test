@@ -1,5 +1,6 @@
 
 #include "ffmpegdecode.h"
+extern pthread_rwlock_t rwlock;
 
 
 /************************************************************************
@@ -89,10 +90,12 @@ void StreamProcess(void *param)
 	av_frame_free(&pFrame);
 	avcodec_close(pCodecCtx);
 	avformat_close_input(&pFormatCtx);
+
+    printf("[%s][%d] exit\n", __FUNCTION__, __LINE__);
 	return;
 }
 
-
+extern MONITOR_RECORD g_record;
 
 void StreamPacketCallback(void *param, AVPacket *packet, int flag)
 {
@@ -102,30 +105,66 @@ void StreamPacketCallback(void *param, AVPacket *packet, int flag)
     }
     TAVInfo *arg = (TAVInfo *)param;
 
+//    printf("[%s][%d] stream index:%d\n", __FUNCTION__, __LINE__, packet->stream_index);
+
     if (flag) {
         if (arg->file){
             fflush(arg->file);
             if (ferror(arg->file)){
-                printf("saveStreamFile[%s]: Err: Unknown!***\n", arg->save_path);
+                printf("[%s][%d][%s]: Err: Unknown!***\n", __FUNCTION__, __LINE__, arg->save_path);
             }
             fclose(arg->file);
             arg->file = NULL;
             arg->save_count++;
-//            arg->thread_exit = 1;
         }
+        if (arg->usbfile){
+            fflush(arg->usbfile);
+            if (ferror(arg->usbfile)){
+                printf("[%s][%d][%s]: Err: Unknown!***\n", __FUNCTION__, __LINE__, arg->usb_save_path);
+            }
+            fclose(arg->usbfile);
+            arg->usbfile = NULL;
+        }
+        printf("[%s][%d] exit\n", __FUNCTION__, __LINE__);
         return;
     }
 
     if (NULL == arg->file) {
         struct tm *t;
+        bool isStore = false;
         time_t tt;
         memset(arg->localtime, 0, 32);
         time(&tt);
         t=localtime(&tt);
         sprintf(arg->localtime, "%d-%d-%d-%d-%d-%d.h264", t->tm_year + 1900, t->tm_mon + 1, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec);
         memset(arg->save_path, 0, SAVE_PATH_LEN);
-        strcpy(arg->save_path, arg->save);
-        strcat(arg->save_path, arg->localtime);
+
+        pthread_rwlock_rdlock(&rwlock); //lock
+        for (int i = 0; i < g_record.storage_manage.count; i++) {
+            printf("[%s][%d] count:%d, index:%d state:%d, path:%s, partition:%s\n", __FUNCTION__, __LINE__, g_record.storage_manage.count, i, \
+                   g_record.storage_manage.device[i].state, g_record.storage_manage.device[i].path, g_record.storage_manage.device[i].partition_name);
+            if (STORAGE_DEVICE_MOUNTED == g_record.storage_manage.device[i].state) {
+                if (USB_DEVICE == g_record.storage_manage.device[i].type) {
+                    if (g_record.storage_manage.device[i].authorize) {
+                        sprintf(arg->save_path, "%s/%s%s", g_record.storage_manage.device[i].path, arg->save, arg->localtime);
+                        isStore = true;
+                        break;
+                    }
+                } else if (HDD_DEVICE == g_record.storage_manage.device[i].type) {
+                    sprintf(arg->save_path, "%s/%s%s", g_record.storage_manage.device[i].path, arg->save, arg->localtime);
+                    isStore = true;
+                    break;
+                }
+            }
+        }
+        pthread_rwlock_unlock(&rwlock); //unlock
+
+        if (!isStore) {
+//            printf("[%s][%d] exit\n", __FUNCTION__, __LINE__);
+            return;
+        }
+//        strcpy(arg->save_path, arg->save);
+//        strcat(arg->save_path, arg->localtime);
 
         arg->file = fopen(arg->save_path, "wb");
         if (arg->file) {
@@ -152,6 +191,6 @@ void StreamPacketCallback(void *param, AVPacket *packet, int flag)
             arg->thread_exit = 1;
         }
     }
-//    printf("stream index:%d\n", packet->stream_index);
+//    printf("[%s][%d] exit\n", __FUNCTION__, __LINE__);
     return ;
 }

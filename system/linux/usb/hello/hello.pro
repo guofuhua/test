@@ -24,7 +24,8 @@ SOURCES += main.cpp \
 HEADERS += \
     ffmpegdecode.h \
     storage.h \
-    threadpool/threadpool.h
+    threadpool/threadpool.h \
+    defbase.h
 
 INCLUDEPATH = third_lib/ffmpeg-3.0.2/include
 LIBS += -L/home/linux/test/helloworld/hello/third_lib/ffmpeg-3.0.2/lib -lavformat -lavcodec -lavutil

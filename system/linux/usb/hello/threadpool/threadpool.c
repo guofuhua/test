@@ -37,6 +37,8 @@
 
 #include "threadpool.h"
 
+#include "defbase.h"
+
 /**
  * 线程池关闭的方式
  */
@@ -119,6 +121,7 @@ int threadpool_free(threadpool_t *pool);
 
 threadpool_t *threadpool_create(int thread_count, int queue_size, int flags)
 {
+    UNUSED(flags);
     if(thread_count <= 0 || thread_count > MAX_THREADS || queue_size <= 0 || queue_size > MAX_QUEUE) {
         return NULL;
     }
@@ -176,6 +179,7 @@ threadpool_t *threadpool_create(int thread_count, int queue_size, int flags)
 int threadpool_add(threadpool_t *pool, void (*function)(void *),
                    void *argument, int flags)
 {
+    UNUSED(flags);
     int err = 0;
     int next;
 

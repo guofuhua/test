@@ -25,13 +25,17 @@ typedef struct {
     char save[SAVE_PATH_LEN];
     streamcallback callback;
     struct timespec startTime;
+    struct timespec usbstartTime;
     struct timespec nowTime;
     char localtime[32];
     char save_path[SAVE_PATH_LEN];
+    char usb_save_path[SAVE_PATH_LEN];
     FILE *file;
+    FILE *usbfile;
     int save_count;
     int thread_exit;
     int duration_sec;
+    int is_usb_save;
 }TAVInfo;
 
 extern void StreamProcess(void *param);

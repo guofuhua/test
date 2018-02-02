@@ -1,4 +1,14 @@
 #if 1
+//#include <QCoreApplication>
+//#include <QDebug>
+#include "storage.h"
+#include <stdio.h>
+#include <pthread.h>
+#include <unistd.h>
+#include <assert.h>
+#include "ffmpegdecode.h"
+#include "threadpool/threadpool.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -12,9 +22,8 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
-//#include "ffmpegdecode.h"
-#include "threadpool/threadpool.h"
 #include "storage.h"
+#include "defbase.h"
 
 extern pthread_rwlock_t rwlock;
 extern MONITOR_RECORD g_record;
@@ -22,20 +31,7 @@ extern MONITOR_RECORD g_record;
 extern int test_main();
 extern int process_dev(STORAGE_DEVICE_MANAGE *manage);
 extern void get_usb_path(char *buf, int flag);
-
-int err_main(void)
-{
-    FILE *fp;
-    extern int errno;
-    char *message;
-    if(NULL==(fp=fopen("/dev/dsp","r+")))
-    {
-        printf("errno=%d\n",errno);
-        message=strerror(errno);
-        printf("Mesg:%s\n",message);
-    }
-    exit(0);
-}
+extern void check_mount_event();
 
 #define UEVENT_BUFFER_SIZE 2048
 
@@ -72,7 +68,7 @@ static int init_hotplug_sock()
 
 void check_hotplug(char *buf, int len)
 {
-    printf("received %d bytes\n",len);
+//    printf("received %d bytes\n",len);
     char *token = buf;
     char *key;
     THOT_PLUG_MSG msg;
@@ -83,7 +79,7 @@ void check_hotplug(char *buf, int len)
             buf[i]='\n';
     token = strtok(buf, seps);
     while (NULL != token) {
-        printf("token: %s\n", token);
+//        printf("token: %s\n", token);
         switch (*token) {
         case 'A':
             if (0 == strncmp("ACTION=", token, 7)) {
@@ -98,6 +94,9 @@ void check_hotplug(char *buf, int len)
             if (SUBSYSTEM_BLOCK == msg.block) {
                 if (0 == strncmp("DEVNAME=", token, 8)) {
                     strcpy(msg.name, (token + 8));
+#if (1)
+                    printf("token: %s\n", token);
+#endif
                 } else if (0 == strncmp("DEVTYPE=", token, 8)) {
                     key = token + 8;
                     if (0 == strncmp("disk", key, 4)) {
@@ -158,39 +157,45 @@ void check_hotplug(char *buf, int len)
                 if (0 == msg.npart) {
                     sprintf(g_record.storage_manage.device[g_record.storage_manage.count - 1].partition_name, "/dev/%s", msg.name);
                     g_record.storage_manage.device[g_record.storage_manage.count - 1].state = STORAGE_DEVICE_INSERT;
-                    process_dev(&g_record.storage_manage);
                 }
                 pthread_rwlock_unlock(&rwlock);
+                check_mount_event();
             } else if (DEVTYPE_PARTITION == msg.disk) {
-                pthread_rwlock_wrlock(&rwlock);
-                sprintf(g_record.storage_manage.device[g_record.storage_manage.count - 1].partition_name, "/dev/%s", msg.name);
-                g_record.storage_manage.device[g_record.storage_manage.count - 1].partition_size[msg.partn] = 0; //add for future;
-                g_record.storage_manage.device[g_record.storage_manage.count - 1].state = STORAGE_DEVICE_INSERT;
-                process_dev(&g_record.storage_manage);
-                pthread_rwlock_unlock(&rwlock);
+                if (1 == msg.partn) {
+                    pthread_rwlock_wrlock(&rwlock);
+                    sprintf(g_record.storage_manage.device[g_record.storage_manage.count - 1].partition_name, "/dev/%s", msg.name);
+                    g_record.storage_manage.device[g_record.storage_manage.count - 1].partition_size[msg.partn] = 0; //add for future;
+                    g_record.storage_manage.device[g_record.storage_manage.count - 1].state = STORAGE_DEVICE_INSERT;
+                    pthread_rwlock_unlock(&rwlock);
+
+                    check_mount_event();
+                } else {
+                    // multi partion, only mount the first partition;
+                    printf("[%s][%d] Multi partition, current partition(%s)(%d)\n", __FUNCTION__, __LINE__, msg.name, msg.partn);
+                }
             }
         } else if (ACTION_REMOVE == msg.action) {
             pthread_rwlock_wrlock(&rwlock);
             for (int i = 0; i < g_record.storage_manage.count; i++) {
                 if (0 == strncmp(g_record.storage_manage.device[i].name, msg.name, 3)) {
                     g_record.storage_manage.device[i].state = STORAGE_DEVICE_REMOVED;
-                    process_dev(&g_record.storage_manage);
-                    for (int j = i; j < g_record.storage_manage.count - 1; j++) {
-                        memcpy(&g_record.storage_manage.device[j], &g_record.storage_manage.device[j + 1], sizeof(STORAGE_DEVICE_INFO));
-                    }
-                    memset(&g_record.storage_manage.device[g_record.storage_manage.count - 1], 0 ,sizeof(STORAGE_DEVICE_INFO));
-                    g_record.storage_manage.count--;
                     break;
                 }
             }
             pthread_rwlock_unlock(&rwlock);
+            check_mount_event();
         }
     }
 //    printf("received %d bytes\n%s\n",len,buf);
 }
 
-int main(int argc, char* argv[])
+void hotplug(void *param)
 {
+    if (NULL == param) {
+        printf("invalid param!\n");
+        return;
+    }
+    TAVInfo *arg = (TAVInfo *)param;
     fd_set fds;
     int ret, rcvlen;
     struct timeval tv;
@@ -200,18 +205,9 @@ int main(int argc, char* argv[])
     test_main();
     pthread_rwlock_unlock(&rwlock);
 
-//    while(1)
-//    {
-//        /* Netlink message buffer */
-//        char buf[UEVENT_BUFFER_SIZE * 2] = {0};
-//        recv(hotplug_sock, &buf, sizeof(buf), 0);
-//        printf("%s\n", buf);
-
-//        /* USB 设备的插拔会出现字符信息，通过比较不同的信息确定特定设备的插拔，在这添加比较代码 */
-//    }
-
-    while (1) {
-        char buf[UEVENT_BUFFER_SIZE] = { 0 };
+    while (!arg->thread_exit) {
+        /* Netlink message buffer */
+        char buf[UEVENT_BUFFER_SIZE * 2] = { 0 };
         FD_ZERO(&fds);
         FD_SET(hotplug_sock, &fds);
         tv.tv_sec = 0;
@@ -229,9 +225,10 @@ int main(int argc, char* argv[])
             check_hotplug(buf, rcvlen);
         }
     }
-    close(hotplug_sock);
-    return 0;
 
+    close(hotplug_sock);
+    printf("[%s][%d] exit\n", __FUNCTION__, __LINE__);
+    return ;
 }
 
 
@@ -240,21 +237,6 @@ int main(int argc, char* argv[])
 
 
 
-#else
-
-
-
-
-
-//#include <QCoreApplication>
-//#include <QDebug>
-#include "storage.h"
-#include <stdio.h>
-#include <pthread.h>
-#include <unistd.h>
-#include <assert.h>
-#include "ffmpegdecode.h"
-#include "threadpool/threadpool.h"
 
 extern pthread_rwlock_t rwlock;
 extern MONITOR_RECORD g_record;
@@ -263,6 +245,7 @@ int tasks = 0, done = 0;
 pthread_mutex_t lock;
 
 void dummy_task(void *arg) {
+    UNUSED(arg);
     usleep(10000);
     pthread_mutex_lock(&lock);
     /* 记录成功完成的任务数 */
@@ -272,23 +255,33 @@ void dummy_task(void *arg) {
 
 int main(int argc, char *argv[])
 {
+    UNUSED(argc);
+    UNUSED(argv);
     //    QCoreApplication a(argc, argv);
 
     int thread_count = 32;
     int queue_size = 256;
     threadpool_t *pool;
     TAVInfo avInfo[MAX_CHANNEL];
+    TAVInfo usb_hotplug;
     memset(avInfo, 0, sizeof(TAVInfo) * MAX_CHANNEL);
+    memset(&usb_hotplug, 0, sizeof(TAVInfo));
     storage::init();
 
     pthread_rwlock_wrlock(&rwlock);
     for (int i = 0; i < g_record.channel_count; i++) {
         avInfo[i].channel_id = g_record.channel[i].channel_id;
-        strncpy(avInfo[i].rtsp, g_record.channel[i].substream, RTSP_PATH_LEN);
-        strncpy(avInfo[i].save, g_record.channel[i].save_sub_path, SAVE_PATH_LEN);
+        if (CHANNEL_SAVE_MAIN == g_record.channel[i].save_mode) {
+            strncpy(avInfo[i].rtsp, g_record.channel[i].mainstream, RTSP_PATH_LEN);
+            strncpy(avInfo[i].save, g_record.channel[i].save_main_path, SAVE_PATH_LEN);
+        } else {
+            strncpy(avInfo[i].rtsp, g_record.channel[i].substream, RTSP_PATH_LEN);
+            strncpy(avInfo[i].save, g_record.channel[i].save_sub_path, SAVE_PATH_LEN);
+        }
         avInfo[i].callback = StreamPacketCallback;
         avInfo[i].file = NULL;
-        avInfo[i].duration_sec = 30;
+        avInfo[i].usbfile = NULL;
+        avInfo[i].duration_sec = 5;
     }
     pthread_rwlock_unlock(&rwlock);
 
@@ -299,11 +292,12 @@ int main(int argc, char *argv[])
     assert((pool = threadpool_create(thread_count, queue_size, 0)) != NULL);
     fprintf(stderr, "Pool started with %d threads and "
             "queue size of %d\n", thread_count, queue_size);
+    threadpool_add(pool, hotplug, (void *)&usb_hotplug, 0);
     threadpool_add(pool, StreamProcess, (void *)&avInfo[0], 0);
-    threadpool_add(pool, StreamProcess, (void *)&avInfo[1], 0);
-    threadpool_add(pool, StreamProcess, (void *)&avInfo[2], 0);
-    threadpool_add(pool, StreamProcess, (void *)&avInfo[3], 0);
-    threadpool_add(pool, StreamProcess, (void *)&avInfo[4], 0);
+//    threadpool_add(pool, StreamProcess, (void *)&avInfo[1], 0);
+//    threadpool_add(pool, StreamProcess, (void *)&avInfo[2], 0);
+//    threadpool_add(pool, StreamProcess, (void *)&avInfo[3], 0);
+//    threadpool_add(pool, StreamProcess, (void *)&avInfo[4], 0);
 
     /* 只要任务队列还没满，就一直添加 */
     while(threadpool_add(pool, &dummy_task, NULL, 0) == 0) {
@@ -313,18 +307,13 @@ int main(int argc, char *argv[])
     }
 
     fprintf(stderr, "Added %d tasks\n", tasks);
+    sleep(3);
+    usb_hotplug.thread_exit = 1;
 
 
     /* 这时候销毁线程池,0 代表 immediate_shutdown */
     assert(threadpool_destroy(pool, 0) == 0);
 
-    return 0;
-
-    //    qDebug() << "hello world!(Qt)";
-    //    char rtsp_url[] = {"rtsp://192.168.60.21/chn0"};
-
-    //    StreamProcess(rtsp_url, NULL, NULL);
-    
     return 0;
 }
 #endif
