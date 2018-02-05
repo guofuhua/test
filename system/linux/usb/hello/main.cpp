@@ -27,6 +27,13 @@
 
 extern pthread_rwlock_t rwlock;
 extern MONITOR_RECORD g_record;
+extern TAVInfo avInfoU[MAX_CHANNEL];
+
+int tasks = 0, done = 0;
+pthread_mutex_t lock;
+TVideoSaveInfo g_usb_hotplug;
+TAVInfo avInfoU[MAX_CHANNEL];
+threadpool_t *pool;
 
 extern int test_main();
 extern int process_dev(STORAGE_DEVICE_MANAGE *manage);
@@ -65,6 +72,36 @@ static int init_hotplug_sock()
     return s;
 }
 
+void check_video_path(TVideoSaveInfo *arg)
+{
+    pthread_rwlock_wrlock(&rwlock); //lock
+    arg->is_disk_save = 0;
+    arg->is_usb_save = 0;
+    for (int i = 0; i < g_record.storage_manage.count; i++) {
+        printf("[%s][%d] count:%d, index:%d state:%d, path:%s, partition:%s, type:%d, auth:%d\n", __FUNCTION__, __LINE__, g_record.storage_manage.count, i, \
+               g_record.storage_manage.device[i].state, g_record.storage_manage.device[i].path, g_record.storage_manage.device[i].partition_name, g_record.storage_manage.device[i].type, \
+               g_record.storage_manage.device[i].authorize);
+        if (STORAGE_DEVICE_MOUNTED == g_record.storage_manage.device[i].state) {
+            if (USB_DEVICE == g_record.storage_manage.device[i].type) {
+                if (g_record.storage_manage.device[i].authorize) {
+                    strcpy(arg->usb_path, g_record.storage_manage.device[i].path);
+                    arg->is_usb_save = 1;
+//                    break;
+                }
+            } else if (HDD_DEVICE == g_record.storage_manage.device[i].type) {
+                strcpy(arg->disk_path, g_record.storage_manage.device[i].path);
+                arg->is_disk_save = 1;
+//                break;
+            }
+        }
+    }
+    if (arg->is_usb_save) {
+        printf("[%s][%d] threadpool_add avInfoU\n", __FUNCTION__, __LINE__);
+        threadpool_add(pool, StreamProcess, (void *)&avInfoU[0], 0);
+    }
+    pthread_rwlock_unlock(&rwlock); //unlock
+    return ;
+}
 
 void check_hotplug(char *buf, int len)
 {
@@ -160,6 +197,7 @@ void check_hotplug(char *buf, int len)
                 }
                 pthread_rwlock_unlock(&rwlock);
                 check_mount_event();
+                check_video_path(&g_usb_hotplug);
             } else if (DEVTYPE_PARTITION == msg.disk) {
                 if (1 == msg.partn) {
                     pthread_rwlock_wrlock(&rwlock);
@@ -169,6 +207,7 @@ void check_hotplug(char *buf, int len)
                     pthread_rwlock_unlock(&rwlock);
 
                     check_mount_event();
+                    check_video_path(&g_usb_hotplug);
                 } else {
                     // multi partion, only mount the first partition;
                     printf("[%s][%d] Multi partition, current partition(%s)(%d)\n", __FUNCTION__, __LINE__, msg.name, msg.partn);
@@ -179,11 +218,18 @@ void check_hotplug(char *buf, int len)
             for (int i = 0; i < g_record.storage_manage.count; i++) {
                 if (0 == strncmp(g_record.storage_manage.device[i].name, msg.name, 3)) {
                     g_record.storage_manage.device[i].state = STORAGE_DEVICE_REMOVED;
+                    for (int j = 0; j < MAX_CHANNEL; j++) {
+                        avInfoU[j].thread_exit = 1;
+                    }
+                    if (0 == strcmp(g_usb_hotplug.usb_path, g_record.storage_manage.device[i].path)) {
+                        g_usb_hotplug.is_usb_save = 0;
+                    }
                     break;
                 }
             }
             pthread_rwlock_unlock(&rwlock);
             check_mount_event();
+            check_video_path(&g_usb_hotplug);
         }
     }
 //    printf("received %d bytes\n%s\n",len,buf);
@@ -195,7 +241,7 @@ void hotplug(void *param)
         printf("invalid param!\n");
         return;
     }
-    TAVInfo *arg = (TAVInfo *)param;
+    TVideoSaveInfo *arg = (TVideoSaveInfo *)param;
     fd_set fds;
     int ret, rcvlen;
     struct timeval tv;
@@ -204,6 +250,7 @@ void hotplug(void *param)
     pthread_rwlock_wrlock(&rwlock);
     test_main();
     pthread_rwlock_unlock(&rwlock);
+    check_video_path(arg);
 
     while (!arg->thread_exit) {
         /* Netlink message buffer */
@@ -237,13 +284,6 @@ void hotplug(void *param)
 
 
 
-
-extern pthread_rwlock_t rwlock;
-extern MONITOR_RECORD g_record;
-
-int tasks = 0, done = 0;
-pthread_mutex_t lock;
-
 void dummy_task(void *arg) {
     UNUSED(arg);
     usleep(10000);
@@ -261,11 +301,11 @@ int main(int argc, char *argv[])
 
     int thread_count = 32;
     int queue_size = 256;
-    threadpool_t *pool;
+//    threadpool_t *pool;
     TAVInfo avInfo[MAX_CHANNEL];
-    TAVInfo usb_hotplug;
     memset(avInfo, 0, sizeof(TAVInfo) * MAX_CHANNEL);
-    memset(&usb_hotplug, 0, sizeof(TAVInfo));
+    memset(avInfoU, 0, sizeof(TAVInfo) * MAX_CHANNEL);
+    memset(&g_usb_hotplug, 0, sizeof(TVideoSaveInfo));
     storage::init();
 
     pthread_rwlock_wrlock(&rwlock);
@@ -281,7 +321,23 @@ int main(int argc, char *argv[])
         avInfo[i].callback = StreamPacketCallback;
         avInfo[i].file = NULL;
         avInfo[i].usbfile = NULL;
-        avInfo[i].duration_sec = 5;
+        avInfo[i].duration_sec = 900;
+    }
+    for (int i = 0; i < g_record.channel_count; i++) {
+        int j = i;
+        avInfoU[j].channel_id = g_record.channel[i].channel_id;
+        if (CHANNEL_SAVE_SUB == g_record.channel[i].save_mode) {
+            strncpy(avInfoU[j].rtsp, g_record.channel[i].mainstream, RTSP_PATH_LEN);
+            strncpy(avInfoU[j].save, g_record.channel[i].save_main_path, SAVE_PATH_LEN);
+        } else {
+            strncpy(avInfoU[j].rtsp, g_record.channel[i].substream, RTSP_PATH_LEN);
+            strncpy(avInfoU[j].save, g_record.channel[i].save_sub_path, SAVE_PATH_LEN);
+        }
+        avInfoU[j].callback = StreamPacketCallback;
+        avInfoU[j].file = NULL;
+        avInfoU[j].usbfile = NULL;
+        avInfoU[j].duration_sec = 30;
+        avInfoU[j].is_usb_stream = 1;
     }
     pthread_rwlock_unlock(&rwlock);
 
@@ -292,7 +348,7 @@ int main(int argc, char *argv[])
     assert((pool = threadpool_create(thread_count, queue_size, 0)) != NULL);
     fprintf(stderr, "Pool started with %d threads and "
             "queue size of %d\n", thread_count, queue_size);
-    threadpool_add(pool, hotplug, (void *)&usb_hotplug, 0);
+    threadpool_add(pool, hotplug, (void *)&g_usb_hotplug, 0);
     threadpool_add(pool, StreamProcess, (void *)&avInfo[0], 0);
 //    threadpool_add(pool, StreamProcess, (void *)&avInfo[1], 0);
 //    threadpool_add(pool, StreamProcess, (void *)&avInfo[2], 0);
@@ -307,10 +363,11 @@ int main(int argc, char *argv[])
     }
 
     fprintf(stderr, "Added %d tasks\n", tasks);
-    sleep(3);
-    usb_hotplug.thread_exit = 1;
-
-
+//    sleep(180);
+//    for (int i = 0; i < MAX_CHANNEL; i++) {
+//        avInfo[i].thread_exit = 1;
+//    }
+//    g_usb_hotplug.thread_exit = 1;
     /* 这时候销毁线程池,0 代表 immediate_shutdown */
     assert(threadpool_destroy(pool, 0) == 0);
 

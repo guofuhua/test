@@ -42,10 +42,10 @@ void storage::init()
         }
         memset(g_record.channel[i].save_main_path, 0, SAVE_PATH_LEN);
 //        sprintf(g_record.channel[i].save_main_path, "main_chn%d-%s", g_record.channel[i].channel_id, nowtime);
-        sprintf(g_record.channel[i].save_main_path, "main_chn%d-", g_record.channel[i].channel_id);
+        sprintf(g_record.channel[i].save_main_path, "main_chn%d", g_record.channel[i].channel_id);
         memset(g_record.channel[i].save_sub_path, 0, SAVE_PATH_LEN);
 //        sprintf(g_record.channel[i].save_sub_path, "sub_chn%d-%s", g_record.channel[i].channel_id, nowtime);
-        sprintf(g_record.channel[i].save_sub_path, "sub_chn%d-", g_record.channel[i].channel_id);
+        sprintf(g_record.channel[i].save_sub_path, "sub_chn%d", g_record.channel[i].channel_id);
     }
     pthread_rwlock_unlock(&rwlock);
 }

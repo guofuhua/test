@@ -14,6 +14,9 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include "storage.h"
+#include <dirent.h>
+#include "threadpool/threadpool.h"
+
 #define STANDARD_6A_LICENSE_FILE    ("license.txt")
 
 extern void set_ALERT_Msg(char * buf);
@@ -47,6 +50,7 @@ void check_mount_event();
 
 extern pthread_rwlock_t rwlock;
 extern MONITOR_RECORD g_record;
+extern threadpool_t *pool;
 
 #define DEVTYPE_DISK 2
 #define DEVTYPE_U    3
@@ -265,7 +269,7 @@ int test_main(){
             printf("this is USB drive\n");
             g_record.storage_manage.device[i].state = STORAGE_DEVICE_INSERT;
             get_usb_path(g_record.storage_manage.device[i].path, 1);
-            g_record.storage_manage.device[i].authorize = 1; //guofh test
+//            g_record.storage_manage.device[i].authorize = 1; //guofh test
         }
         if(g_record.storage_manage.device[i].type == HDD_DEVICE)
         {
@@ -326,6 +330,23 @@ void get_usb_path(char *buf, int flag)
     printf("\n");
 }
 
+int get_str_value(char *src, char *dest)
+{
+    while ((*src != '[') && (*src != '\0')) {
+        src++;
+    }
+    if (*src == '\0') {
+        return -1;
+    } else {
+        src++;
+    }
+    while ((*src != ']') && (*src != '\0')) {
+        *dest++ = *src++;
+    }
+    *dest = '\0';
+    return 0;
+}
+
 int check_udisk_authorize(char *path)
 {
     ssize_t       size;
@@ -333,8 +354,9 @@ int check_udisk_authorize(char *path)
     char          *line = NULL;
     char          *pname;
     int step = 0;
+    int ret = -1;
     char key[5][2][12] = {{{"Username"}, 0}, {{"Password"}, 0}, {{"Channel"}, 0}, {{"TimeFrom"}, 0}, {{"TimeSpan"}, 0}};
-    printf("[%s] key size:%d\n", __FUNCTION__, sizeof(key));
+//    printf("[%s] key size:%d\n", __FUNCTION__, sizeof(key));
     char license_file[SAVE_PATH_LEN];
     sprintf(license_file, "%s/%s", path, STANDARD_6A_LICENSE_FILE);
     if (access(license_file, R_OK)) {
@@ -347,30 +369,41 @@ int check_udisk_authorize(char *path)
             /* get 6A license */
             while((size = getline(&line, &len, file)) != -1)
             {
-                printf("line:%s\n", line);
+//                printf("line:%s\n", line);
                 if ((pname = strstr(line, key[step][0]))) {
-                    printf("[%s] key:%s\n", __FUNCTION__, pname);
-                    if ((pname = strchr(pname, '['))) {
-                        printf("[%s] value:%s\n", __FUNCTION__, pname);
-                        step++;
+                    if (get_str_value(pname, key[step][1])) {
+                        printf("[%s][%d] not fount key(%s) value.\n", __FUNCTION__, __LINE__, key[step][0]);
                     }
+                    step++;
                 }
             }
             fclose(file);
         }
     }
-    printf("[%s][%d] exit(%d)\n", __FUNCTION__, __LINE__, step);
-    return step;
+
+    if ((ret = strcmp(key[0][1], "6A"))) {
+        printf("[%s][%d] %s %s compare(%d)\n", __FUNCTION__, __LINE__, key[0][0], key[0][1], ret);
+    } else {
+        if ((ret = strcmp(key[1][1], "A6"))) {
+            printf("[%s][%d] %s %s compare(%d)\n", __FUNCTION__, __LINE__, key[1][0], key[1][1], ret);
+        } else {
+            ret = 0;
+        }
+    }
+    printf("[%s][%d] exit(%d)\n", __FUNCTION__, __LINE__, ret);
+    return ret;
 }
 
 void check_mount_event()
 {
     int loop;
+    int is_authorize;
     char path[SAVE_PATH_LEN];
     struct timespec start_time, now_time;
     clock_gettime(CLOCK_MONOTONIC, &start_time);
     do {
         loop = 0;
+        is_authorize = 0;
         usleep(500000);
         pthread_rwlock_rdlock(&rwlock);     //lock
         for (int i = 0; i < g_record.storage_manage.count; i++) {
@@ -381,8 +414,9 @@ void check_mount_event()
                 {
                     if (0 == do_umount(&g_record.storage_manage.device[i])) {
 //                        g_record.storage_manage.device[i].state = STORAGE_DEVICE_NONE;
-
-                        get_usb_path(g_record.storage_manage.device[i].path, 0);
+                        if (USB_DEVICE == g_record.storage_manage.device[i].type) {
+                            get_usb_path(g_record.storage_manage.device[i].path, 0);
+                        }
                         pthread_rwlock_unlock(&rwlock); //unlock
                         pthread_rwlock_wrlock(&rwlock); //write lock
                         for (int j = i; j < g_record.storage_manage.count - 1; j++) {
@@ -395,7 +429,7 @@ void check_mount_event()
                         i--;    //delete one data;
                     } else {
                         clock_gettime(CLOCK_MONOTONIC, &now_time);
-                        if (now_time.tv_sec > start_time.tv_sec + 2) {
+                        if (now_time.tv_sec > start_time.tv_sec + 20) {
                             pthread_rwlock_unlock(&rwlock); //unlock
                             pthread_rwlock_wrlock(&rwlock); //write lock
                             g_record.storage_manage.device[i].state = STORAGE_DEVICE_MOUNT_E;
@@ -404,7 +438,9 @@ void check_mount_event()
                         }
                     }
                 } else {
-                    get_usb_path(g_record.storage_manage.device[i].path, 0);
+                    if (USB_DEVICE == g_record.storage_manage.device[i].type) {
+                        get_usb_path(g_record.storage_manage.device[i].path, 0);
+                    }
                     pthread_rwlock_unlock(&rwlock); //unlock
                     pthread_rwlock_wrlock(&rwlock); //write lock
                     for (int j = i; j < g_record.storage_manage.count - 1; j++) {
@@ -423,12 +459,20 @@ void check_mount_event()
                 {
                     if (0 == do_mount(&g_record.storage_manage.device[i])) {
                         strncpy(path, g_record.storage_manage.device[i].path, SAVE_PATH_LEN);
+                        if (USB_DEVICE == g_record.storage_manage.device[i].type) {
+                            if (0 == check_udisk_authorize(g_record.storage_manage.device[i].path)) {
+                                is_authorize = 1;
+                            }
+                        }
                         pthread_rwlock_unlock(&rwlock); //unlock
 
                         /** check udisk is authorized */
 
                         pthread_rwlock_wrlock(&rwlock); //write lock
                         g_record.storage_manage.device[i].state = STORAGE_DEVICE_MOUNTED;
+                        if (is_authorize) {
+                            g_record.storage_manage.device[i].authorize = 1;
+                        }
                         pthread_rwlock_unlock(&rwlock); //write unlock
                         pthread_rwlock_rdlock(&rwlock); //lock
                     } else {
@@ -444,10 +488,20 @@ void check_mount_event()
                 } else {
                     pthread_rwlock_unlock(&rwlock); //unlock
                     pthread_rwlock_wrlock(&rwlock); //write lock
-                    get_usb_path(g_record.storage_manage.device[i].path, 0);
+                    if (USB_DEVICE == g_record.storage_manage.device[i].type) {
+                        get_usb_path(g_record.storage_manage.device[i].path, 0);
+                    }
                     strncpy(g_record.storage_manage.device[i].path, path, SAVE_PATH_LEN);
-                    get_usb_path(g_record.storage_manage.device[i].path, 2);
+                    if (USB_DEVICE == g_record.storage_manage.device[i].type) {
+                        get_usb_path(g_record.storage_manage.device[i].path, 2);
+                        if (0 == check_udisk_authorize(g_record.storage_manage.device[i].path)) {
+                            is_authorize = 1;
+                        }
+                    }
                     g_record.storage_manage.device[i].state = STORAGE_DEVICE_MOUNTED;
+                    if (is_authorize) {
+                        g_record.storage_manage.device[i].authorize = 1;
+                    }
                     pthread_rwlock_unlock(&rwlock); //write unlock
                     pthread_rwlock_rdlock(&rwlock); //lock
                 }
@@ -471,16 +525,25 @@ int process_dev(STORAGE_DEVICE_MANAGE *manage)
             {
                 if (0 == do_mount(&manage->device[i])) {
                     manage->device[i].state = STORAGE_DEVICE_MOUNTED;
+                    if (USB_DEVICE == manage->device[i].type) {
+                        if (0 == check_udisk_authorize(manage->device[i].path)) {
+                            manage->device[i].authorize = 1;
+                        }
+                    }
                 } else {
                     manage->device[i].state = STORAGE_DEVICE_MOUNT_E;
                 }
             } else {
-                get_usb_path(manage->device[i].path, 0);
+                if (USB_DEVICE == manage->device[i].type) {
+                    get_usb_path(manage->device[i].path, 0);
+                }
                 strncpy(manage->device[i].path, path, SAVE_PATH_LEN);
-                get_usb_path(manage->device[i].path, 2);
                 manage->device[i].state = STORAGE_DEVICE_MOUNTED;
                 if (USB_DEVICE == manage->device[i].type) {
-                    check_udisk_authorize(manage->device[i].path);
+                    get_usb_path(manage->device[i].path, 2);
+                    if (0 == check_udisk_authorize(manage->device[i].path)) {
+                        manage->device[i].authorize = 1;
+                    }
                 }
             }
         }
@@ -536,6 +599,107 @@ static int check_mount(STORAGE_DEVICE_INFO * dev, char * dev_path)
     return ret;
 }
 
+#define MODE (S_IRWXU | S_IRWXG | S_IRWXO)
+
+int mk_dir(char *dir)
+{
+    DIR *mydir = NULL;
+    if((mydir= opendir(dir))==NULL)//判断目录
+    {
+        int ret = mkdir(dir, MODE);//创建目录
+        if (ret != 0)
+        {
+            printf("[%s] mkdir errno=%d, Mesg:%s\n", __FUNCTION__, errno, strerror(errno));
+            return -1;
+        }
+        printf("%s created sucess!\n", dir);
+    }
+//    else
+//    {
+//        printf("%s exist!\n", dir);
+//    }
+
+    return 0;
+}
+
+int mk_all_dir(char *dir)
+{
+    bool flag = true;
+    char *pDir = dir;
+    int ret = 0;
+    while (flag)
+    {
+        char *pIndex = index(pDir, '/');
+        if (pIndex != NULL && pIndex != dir)
+        {
+            char buffer[512] = {0};
+            int msg_size = pIndex - dir;
+            memcpy(buffer, dir, msg_size);
+            int ret = mk_dir(buffer);
+            if (ret < 0)
+            {
+                printf("%s created failed!\n", dir);
+            }
+        }
+        else if (pIndex == NULL && pDir == dir)
+        {
+            printf("dir is not directory!\n");
+            return -1;
+        }
+        else if (pIndex == NULL && pDir != dir)
+        {
+//            int ret = mk_dir(dir);
+//            if (ret < 0)
+//            {
+//                printf("%s created failed!\n", dir);
+//            }
+            printf("%s is a file!\n", pDir);
+            ret = 0;
+            break;
+        }
+
+        pDir = pIndex+1;
+    }
+
+    return ret;
+}
+
+//创建多级目录
+int mkdirs(char* sPathName)
+{
+    char DirName[256];
+    int i, len;
+
+    strcpy(DirName, sPathName);
+    len = strlen(DirName);
+    if('/' != DirName[len-1]) {
+        strcat(DirName, "/");
+        len++;
+    }
+    if(access(DirName, X_OK) != 0)
+    {
+        printf("[%s] access %s error, errno=%d, Mesg:%s\n", __FUNCTION__, DirName, errno, strerror(errno));
+        for(i=1; i<len; i++)
+        {
+            if('/' == DirName[i])
+            {
+                DirName[i] = '\0';
+                if(access(DirName, F_OK) != 0)
+                {
+                    printf("[%s] access %s error, errno=%d, Mesg:%s\n", __FUNCTION__, DirName, errno, strerror(errno));
+                    if (0 != mkdir(DirName, 0777)) {
+                        printf("[%s] mkdir errno=%d, Mesg:%s\n", __FUNCTION__, errno, strerror(errno));
+                        return -1;
+                    }
+                }
+                DirName[i] = '/';
+            }
+        }
+    }
+
+    return 0;
+}
+
 static int do_mount(STORAGE_DEVICE_INFO * dev)
 {
     if(access(dev->path, X_OK) != 0) {
@@ -581,6 +745,11 @@ static int do_umount(STORAGE_DEVICE_INFO * dev)
     else
     {
         printf("umount errno=%d, Mesg:%s\n",errno, strerror(errno));
+        char buf[64];
+        sprintf(buf, "umount -fl %s", dev->path);
+        int ret = system(buf);
+        printf("[%s] system call (%s) return %d\n", __FUNCTION__, buf, ret);
+//        if (system(buf))
     }
     return 1;
 }

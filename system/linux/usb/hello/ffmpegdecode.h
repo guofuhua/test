@@ -35,8 +35,18 @@ typedef struct {
     int save_count;
     int thread_exit;
     int duration_sec;
-    int is_usb_save;
+    int is_usb_stream;
+    time_t open_again;
 }TAVInfo;
+
+typedef struct {
+//    int duration_sec;
+    int is_usb_save;
+    int is_disk_save;
+    int thread_exit;
+    char usb_path[SAVE_PATH_LEN];
+    char disk_path[SAVE_PATH_LEN];
+}TVideoSaveInfo;
 
 extern void StreamProcess(void *param);
 void StreamPacketCallback(void *param, AVPacket *packet, int flag);
