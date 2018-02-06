@@ -95,9 +95,19 @@ void check_video_path(TVideoSaveInfo *arg)
             }
         }
     }
+    if (arg->is_disk_save || arg->is_usb_save) {
+        arg->is_save = 1;
+    } else {
+        arg->is_save = 0;
+    }
     if (arg->is_usb_save) {
         printf("[%s][%d] threadpool_add avInfoU\n", __FUNCTION__, __LINE__);
-        threadpool_add(pool, StreamProcess, (void *)&avInfoU[0], 0);
+        int ret = threadpool_add(pool, StreamProcess, (void *)&avInfoU[0], 0);
+        ret = threadpool_add(pool, StreamProcess, (void *)&avInfoU[1], 0);
+//        ret = threadpool_add(pool, StreamProcess, (void *)&avInfoU[2], 0);
+//        ret = threadpool_add(pool, StreamProcess, (void *)&avInfoU[3], 0);
+//        ret = threadpool_add(pool, StreamProcess, (void *)&avInfoU[4], 0);
+        printf("[%s][%d] threadpool_add avInfoU, ret:%d\n", __FUNCTION__, __LINE__, ret);
     }
     pthread_rwlock_unlock(&rwlock); //unlock
     return ;
@@ -291,6 +301,7 @@ void dummy_task(void *arg) {
     /* 记录成功完成的任务数 */
     done++;
     pthread_mutex_unlock(&lock);
+    printf("[%s][%d] exit\n", __FUNCTION__, __LINE__);
 }
 
 int main(int argc, char *argv[])
@@ -350,24 +361,31 @@ int main(int argc, char *argv[])
             "queue size of %d\n", thread_count, queue_size);
     threadpool_add(pool, hotplug, (void *)&g_usb_hotplug, 0);
     threadpool_add(pool, StreamProcess, (void *)&avInfo[0], 0);
-//    threadpool_add(pool, StreamProcess, (void *)&avInfo[1], 0);
-//    threadpool_add(pool, StreamProcess, (void *)&avInfo[2], 0);
-//    threadpool_add(pool, StreamProcess, (void *)&avInfo[3], 0);
-//    threadpool_add(pool, StreamProcess, (void *)&avInfo[4], 0);
+    threadpool_add(pool, StreamProcess, (void *)&avInfo[1], 0);
+    threadpool_add(pool, StreamProcess, (void *)&avInfo[2], 0);
+    threadpool_add(pool, StreamProcess, (void *)&avInfo[3], 0);
+    threadpool_add(pool, StreamProcess, (void *)&avInfo[4], 0);
 
-    /* 只要任务队列还没满，就一直添加 */
-    while(threadpool_add(pool, &dummy_task, NULL, 0) == 0) {
-        pthread_mutex_lock(&lock);
-        tasks++;
-        pthread_mutex_unlock(&lock);
+//    /* 只要任务队列还没满，就一直添加 */
+//    while(threadpool_add(pool, &dummy_task, NULL, 0) == 0) {
+//        pthread_mutex_lock(&lock);
+//        tasks++;
+//        pthread_mutex_unlock(&lock);
+//    }
+
+//    fprintf(stderr, "Added %d tasks\n", tasks);
+
+    while (1) {
+        sleep(180);
     }
 
-    fprintf(stderr, "Added %d tasks\n", tasks);
-//    sleep(180);
-//    for (int i = 0; i < MAX_CHANNEL; i++) {
-//        avInfo[i].thread_exit = 1;
-//    }
-//    g_usb_hotplug.thread_exit = 1;
+    for (int i = 0; i < MAX_CHANNEL; i++) {
+        avInfo[i].thread_exit = 1;
+    }
+    for (int i = 0; i < MAX_CHANNEL; i++) {
+        avInfoU[i].thread_exit = 1;
+    }
+    g_usb_hotplug.thread_exit = 1;
     /* 这时候销毁线程池,0 代表 immediate_shutdown */
     assert(threadpool_destroy(pool, 0) == 0);
 

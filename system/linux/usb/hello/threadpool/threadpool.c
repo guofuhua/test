@@ -183,6 +183,8 @@ int threadpool_add(threadpool_t *pool, void (*function)(void *),
     int err = 0;
     int next;
 
+//    printf("[%s][%d] pool count %d, queue size %d\n", __FUNCTION__, __LINE__, pool->count, pool->queue_size);
+
     if(pool == NULL || function == NULL) {
         return threadpool_invalid;
     }
@@ -322,6 +324,7 @@ static void *threadpool_thread(void *threadpool)
 {
     threadpool_t *pool = (threadpool_t *)threadpool;
     threadpool_task_t task;
+//    printf("[%s][%d] pool count %d, queue size %d\n", __FUNCTION__, __LINE__, pool->count, pool->queue_size);
 
     for(;;) {
         /* Lock must be taken to wait on conditional variable */
@@ -335,6 +338,7 @@ static void *threadpool_thread(void *threadpool)
             /* 任务队列为空，且线程池没有关闭时阻塞在这里 */
             pthread_cond_wait(&(pool->notify), &(pool->lock));
         }
+//        printf("[%s][%d] pool count %d, shutdown %d\n", __FUNCTION__, __LINE__, pool->count, pool->shutdown);
 
         /* 关闭的处理 */
         if((pool->shutdown == immediate_shutdown) ||
@@ -358,7 +362,9 @@ static void *threadpool_thread(void *threadpool)
 
         /* Get to work */
         /* 开始运行任务 */
+//        printf("[%s][%d] pool count %d, queue size %d\n", __FUNCTION__, __LINE__, pool->count, pool->queue_size);
         (*(task.function))(task.argument);
+//        printf("[%s][%d] pool count %d, queue size %d\n", __FUNCTION__, __LINE__, pool->count, pool->queue_size);
         /* 这里一个任务运行结束 */
     }
 

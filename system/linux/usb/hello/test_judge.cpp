@@ -614,10 +614,11 @@ int mk_dir(char *dir)
         }
         printf("%s created sucess!\n", dir);
     }
-//    else
-//    {
+    else
+    {
+        closedir(mydir);
 //        printf("%s exist!\n", dir);
-//    }
+    }
 
     return 0;
 }
@@ -627,15 +628,32 @@ int mk_all_dir(char *dir)
     bool flag = true;
     char *pDir = dir;
     int ret = 0;
+    int msg_size = 0;
+    char buffer[512] = {0};
+    char *path = strrchr(pDir, '/');
+    if (path != NULL && path != dir) {
+        msg_size = path - dir;
+        memcpy(buffer, dir, msg_size);
+        struct stat s_buf;
+
+        /*获取文件信息，把信息放到s_buf中*/
+        if (stat(buffer,&s_buf)) {
+            printf("[%s] stat %s error, errno=%d, Mesg:%s\n", __FUNCTION__, buffer, errno, strerror(errno));
+        } else if(S_ISDIR(s_buf.st_mode)) {
+            /*判断输入的文件路径是否目录，若是目录，则返回*/
+            return 0;
+        }
+    }
+
     while (flag)
     {
         char *pIndex = index(pDir, '/');
         if (pIndex != NULL && pIndex != dir)
         {
-            char buffer[512] = {0};
-            int msg_size = pIndex - dir;
+            memset(buffer, 0, sizeof(buffer));
+            msg_size = pIndex - dir;
             memcpy(buffer, dir, msg_size);
-            int ret = mk_dir(buffer);
+            ret = mk_dir(buffer);
             if (ret < 0)
             {
                 printf("%s created failed!\n", dir);
@@ -653,7 +671,7 @@ int mk_all_dir(char *dir)
 //            {
 //                printf("%s created failed!\n", dir);
 //            }
-            printf("%s is a file!\n", pDir);
+            printf("%s is a file!\n", dir);
             ret = 0;
             break;
         }
