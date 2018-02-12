@@ -11,10 +11,11 @@ void Text2Bin(const char* sIn,const char* sOut){
     size_t read_count = 0;
     size_t write_count = 0;
     memset(a, 0, 255);
-    FILE* fin=fopen(sIn,"r");
-    FILE* fout=fopen(sOut,"w");
+    FILE* fin=fopen(sIn,"rb");
+    FILE* fout=fopen(sOut,"wb");
     int odd = 0;
-    while(1)
+    int run_ok = 1;
+    while(run_ok)
     {
         memset(a, 0, 255);
         read_count = fread(a, 1, 255, fin);
@@ -43,7 +44,8 @@ void Text2Bin(const char* sIn,const char* sOut){
                     ch = 0;
                     write_count = fwrite(write_buf, 1, 1, fout);
                     if (1 != write_count) {
-                        printf("write_count=%d\n", write_count);
+                        printf("[%s][%d] write_count=%d\n", __FUNCTION__, __LINE__, write_count);
+                        run_ok = 0;
                     }
                 }
                 ch = ch << 4;
@@ -63,7 +65,8 @@ void Text2Bin(const char* sIn,const char* sOut){
                     ch = 0;
                     write_count = fwrite(write_buf, 1, 1, fout);
                     if (1 != write_count) {
-                        printf("write_count=%d\n", write_count);
+                        printf("[%s][%d] write_count=%d\n", __FUNCTION__, __LINE__, write_count);
+                        run_ok = 0;
                     }
                 }
                 ch = ch << 4;
@@ -82,7 +85,8 @@ void Text2Bin(const char* sIn,const char* sOut){
                     ch = 0;
                     write_count = fwrite(write_buf, 1, 1, fout);
                     if (1 != write_count) {
-                        printf("write_count=%d\n", write_count);
+                        printf("[%s][%d] write_count=%d\n", __FUNCTION__, __LINE__, write_count);
+                        run_ok = 0;
                     }
                 }
                 ch = ch << 4;
@@ -110,21 +114,25 @@ void Text2Bin(const char* sIn,const char* sOut){
     fclose(fin);
     fclose(fout);
 }
+
 /***********二进制文件转文本文件**********/
 void Bin2Text(const char* sIn,const char* sOut){
-    FILE* fin=fopen(sIn,"r");
-    FILE* fout=fopen(sOut,"w");
+    FILE* fin=fopen(sIn,"rb");
+    FILE* fout=fopen(sOut,"wb");
     unsigned char a[255];
+    long bytes = 0;
 
     size_t read_count = 0;
     size_t write_count = 0;
     size_t i = 0;
     char cRead[4];
     char cChar[16] = {'0', '1', '2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
+
     while(!feof(fin))
     {
         memset(a, 0, 255);
         read_count = fread(a, 1, 255, fin);
+        bytes += read_count;
         for (i = 0; i < read_count; i++)
         {
             cRead[0] = cChar[(a[i] / 16)];
@@ -137,7 +145,12 @@ void Bin2Text(const char* sIn,const char* sOut){
         }
     }
     fclose(fin);
+    fflush(fout);
+    if (ferror(fout)){
+        printf("[%s][%d] saveStreamFile[%s]: Err: Unknown!***\n", __FUNCTION__, __LINE__, sOut);
+    }
     fclose(fout);
+    printf("convert :%ld, bytes\n", bytes);
 }
 
 int ConvertMain(int argc, char* argv[]){
