@@ -182,3 +182,80 @@ int ConvertMain(int argc, char* argv[]){
     printf("\nSuccessfully converted file!\n");
     return 0;
 }
+
+/***********二进制文件剪切文件**********/
+void CutFile(const char* sIn,const char* sOut, long start_pos, long offset_pos){
+    FILE* fin=fopen(sIn,"rb");
+    FILE* fout=fopen(sOut,"wb");
+    unsigned char a[255];
+    long bytes = 0;
+    fseek(fin, 0, SEEK_END);
+    bytes = ftell(fin);
+    if (bytes > start_pos) {
+        fseek(fin, start_pos, SEEK_SET);
+        if (bytes < start_pos + offset_pos) {
+            offset_pos = bytes - start_pos;
+        }
+    } else {
+        printf("[%s][%d] saveStreamFile[%s]: Err: Unknown!***\n", __FUNCTION__, __LINE__, sOut);
+        return;
+    }
+
+    size_t read_count = 0;
+    size_t write_count = 0;
+
+    bytes = 0;
+    while(!feof(fin))
+    {
+        memset(a, 0, 255);
+        read_count = fread(a, 1, 255, fin);
+        if (bytes + read_count > offset_pos) {
+            read_count = offset_pos - bytes;
+        }
+        write_count = fwrite(a, 1, read_count, fout);
+        if (read_count != write_count) {
+            printf("read_count=%ld, write_count=%ld\n", read_count, write_count);
+        }
+        bytes += write_count;
+        if (bytes >= offset_pos) {
+            printf("bytes=%ld, offset_pos=%ld\n", bytes, offset_pos);
+            break;
+        }
+    }
+    fclose(fin);
+    fflush(fout);
+    if (ferror(fout)){
+        printf("[%s][%d] saveStreamFile[%s]: Err: Unknown!***\n", __FUNCTION__, __LINE__, sOut);
+    }
+    fclose(fout);
+    printf("convert :%ld, bytes\n", bytes);
+}
+
+int CuttingMain(int argc, char* argv[]){
+    int i;
+    char name[1024];
+    char *stopstring;
+    long start_pos = 0;
+    long offset_pos = 0;
+    if (argc < 4)
+    {
+        printf("Usage:./a.out 0 35210 data.bin , cut_data.bin file is create, file size 35210.\n");
+        return 0;
+    }
+    for(i = 0; i<argc; i++)
+    {
+        printf("%d:%s\n", i, argv[i]);
+    }
+    memset(name, 0, sizeof(name));
+//    strcpy(name, "cut_");
+//    strcat(name, argv[3]);
+    strcpy(name, argv[3]);
+    strcat(name, "cut.bin");
+    start_pos = strtol(argv[1], &stopstring, 10);
+    offset_pos = strtol(argv[2], &stopstring, 10);
+    CutFile(argv[3], name, start_pos, offset_pos);
+
+    //Text2Bin("0_111_1672_10-19-16-17.txt","a2.txt");
+    printf("\nSuccessfully cut file!\n");
+    return 0;
+}
