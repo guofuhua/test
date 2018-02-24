@@ -22,6 +22,9 @@ void FileConvert::on_pushButton_clicked()
     ui->lineEdit->setText(file);
     ui->label_input->setText(QFileInfo(file).fileName());
     ui->horizontalScrollBar->setEnabled(true);
+    ui->pushButton_2->setEnabled(true);
+    ui->pushButton_3->setEnabled(true);
+    ui->pushButton_4->setEnabled(true);
     QFileInfo fileInfo(file);
     ui->label_total_size->setText(QString::number(fileInfo.size()));
 }

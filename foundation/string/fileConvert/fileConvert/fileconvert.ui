@@ -92,6 +92,9 @@
    </property>
   </widget>
   <widget class="QPushButton" name="pushButton_2">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="geometry">
     <rect>
      <x>290</x>
@@ -105,6 +108,9 @@
    </property>
   </widget>
   <widget class="QPushButton" name="pushButton_3">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="geometry">
     <rect>
      <x>290</x>
@@ -118,6 +124,9 @@
    </property>
   </widget>
   <widget class="QScrollBar" name="horizontalScrollBar">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="geometry">
     <rect>
      <x>30</x>
@@ -167,6 +176,9 @@
    </property>
   </widget>
   <widget class="QPushButton" name="pushButton_4">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="geometry">
     <rect>
      <x>290</x>
