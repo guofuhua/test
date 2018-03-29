@@ -14,7 +14,7 @@ QTranslator *m_translator;
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-    m_translator = new QTranslator();   //QTranslator ±ØÐëÊÇÈ«¾ÖµÄ£¬²»È»»á»Ö¸´Ä¬ÈÏÖµ¡£
+    m_translator = new QTranslator();   //QTranslator å¿…é¡»æ˜¯å…¨å±€çš„ï¼Œä¸ç„¶ä¼šæ¢å¤é»˜è®¤å€¼ã€‚
     InitUiByLanguage("chese");
     qApp->installTranslator(m_translator);
 //    MainWindow w;
